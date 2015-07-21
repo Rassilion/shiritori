@@ -1,0 +1,6 @@
+flask
+flask-sqlalchemy
+flask-admin
+Flask-Script
+flask-wtf
+WTForms-Alchemy
