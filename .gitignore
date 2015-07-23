@@ -60,3 +60,4 @@ target/
 bower_components/
 node_modules/
 typings/
+shiritori/static/js/
