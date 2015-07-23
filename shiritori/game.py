@@ -4,7 +4,7 @@ from dictionary import english
 import random
 
 
-class Game:
+class Game(object):
     def __init__(self, id):
         self.id = id
         self.p1 = 0
@@ -12,6 +12,9 @@ class Game:
         self.p1_list = []
         self.p2_list = []
         self.letter = "a"
+
+    def __repr__(self):
+        return str(self.id)
 
     def check(self, word):
         if word.startswith(self.letter) and word not in self.p1_list and word not in self.p2_list and word in english[

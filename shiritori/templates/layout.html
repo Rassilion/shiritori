@@ -4,6 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <title></title>
+    <script src="//code.jquery.com/jquery-2.1.4.js"></script>
+
+
 </head>
 <body>
 {% with messages = get_flashed_messages() %}
@@ -17,5 +20,6 @@
 {% endwith %}
 {% block content %}
 {% endblock %}
+<script type="text/javascript" src="{{ url_for('static', filename='js/game.js')}}"></script>
 </body>
 </html>
