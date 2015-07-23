@@ -20,7 +20,7 @@ def index():
     form = forms.CreateForm()
     if form.validate_on_submit():
         id = form.id.data
-        game_list[id]=Game(id)
+        game_list[id] = Game(id)
     return render_template('index.html', list=game_list.keys(), form=form)
 
 

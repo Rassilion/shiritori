@@ -1,0 +1,27 @@
+{
+  "name": "shiritori",
+  "version": "0.0.0",
+  "homepage": "https://github.com/Rassilion/shiritori",
+  "authors": [
+    "Rassilion <denizgezgin365@gmail.com>"
+  ],
+  "description": "shiritori game",
+  "moduleType": [
+    "amd",
+    "es6",
+    "globals",
+    "node",
+    "yui"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "~2.1.4"
+  }
+}

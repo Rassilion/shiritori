@@ -1,31 +1,15 @@
-{% import "macros/wtf.html" as wtf %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title></title>
-</head>
-<body>
-{% with messages = get_flashed_messages() %}
-  {% if messages %}
-    <ul class=flashes>
-    {% for message in messages %}
-      <li>{{ message }}</li>
-    {% endfor %}
+{% extends "layout.html" %}
+{% block content %}
+    <ul>
+        <li>letter:{{ game.letter }}</li>
+        <li>p1:{{ game.p1 }}</li>
+        <li>p1_list:{{ game.p1_list }}</li>
+        <li>p2:{{ game.p2 }}</li>
+        <li>p2_list:{{ game.p2_list }}</li>
     </ul>
-  {% endif %}
-{% endwith %}
-<ul>
-    <li>letter:{{ game.letter }}</li>
-    <li>p1:{{ game.p1 }}</li>
-    <li>p1_list:{{ game.p1_list }}</li>
-    <li>p2:{{ game.p2 }}</li>
-    <li>p2_list:{{ game.p2_list }}</li>
-</ul>
-<div class="your-form">
+    <div class="your-form">
         {{ wtf.render_form(form, action_url=url_for('game',id=game.id), action_text='Submit Form') }}
     </div>
 
-Rendered in {{ g.request_time() }}
-</body>
-</html>
+    Rendered in {{ g.request_time() }}
+{% endblock %}

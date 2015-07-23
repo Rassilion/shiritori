@@ -1,19 +1,12 @@
-{% import "macros/wtf.html" as wtf %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title></title>
-</head>
-<body>
-<div class="your-form">
+{% extends "layout.html" %}
+{% block content %}
+    <div class="your-form">
         {{ wtf.render_form(form, action_url=url_for('index'), action_text='Submit Form') }}
     </div>
-<ul>
-{% for i in list %}
-    <li><a href="{{ url_for('game',id=i) }}">{{ i }} </a></li>
-{% endfor %}
-</ul>
-Rendered in {{ g.request_time() }}
-</body>
-</html>
+    <ul>
+        {% for i in list %}
+            <li><a href="{{ url_for('game',id=i) }}">{{ i }} </a></li>
+        {% endfor %}
+    </ul>
+    Rendered in {{ g.request_time() }}
+{% endblock %}
