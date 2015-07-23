@@ -1,19 +1,28 @@
 /// <reference path="typings/jquery/jquery.d.ts" />
+/// <reference path="typings/socket.io/socket.io.d.ts" />
+/// <reference path="typings/node/node.d.ts" />
+
 
 $(document).ready(function () {
 
-    $.getJSON("/_get_game/1", function (data) {
-        var items = [];
-        items.push("<li id=' p1 '>Player1 score:" + data.p1 + "</li>");
-        items.push("<li id=' p1l '>Player1 list:" + data.p1_list + "</li>");
-        items.push("<li id=' p2 '>Player2 score:" + data.p2 + "</li>");
-        items.push("<li id=' p2l '>Player2 list:" + data.p2_list + "</li>");
-
-        $("#word").val(data.letter);
-        $("<ul/>", {
-            "class": "my-new-list",
-            html: items.join("")
-        }).appendTo("body");
+    var socket = io.connect('http://' + document.domain + ':' + location.port);
+    socket.on('echo_game_list', function (data) {
+        var list = [];
+        $.each(data.id, function (j, i) {
+            list.push('<li id=' + i + '>' + i + '</li>');
+        });
+        $('#gamelist').html(list.join(""));
     });
+    socket.on('echo_ng', function (data) {
+        $('#response').html('<p>' + data.uid + '</p>');
+    });
+    socket.emit('game_list', {});
+    $("#refresh").click(function send() {
+        socket.emit('game_list', {});
+    });
+    $("#ng").click(function send() {
+        socket.emit('new_game', {});
+    });
+
 });
 

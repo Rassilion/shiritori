@@ -1,16 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from flask import render_template, flash, g, jsonify
-from shiritori import app, forms
+from shiritori import app, forms, socketio
 from game import Game
 import time
+import json
 
 game_list = {}
+uid = 1
 
 
 @app.before_first_request
 def test():
-    game_list[1]=Game(1)
+    game_list[1] = Game(1)
 
 
 @app.before_request
@@ -39,11 +41,15 @@ def game(id):
     return render_template('game.html', form=form)
 
 
-@app.route('/_get_game_list', methods=['GET'])
-def get_game_list():
-    return jsonify(id=game_list.keys())
+@socketio.on('game_list')
+def handle_game_list(data):
+    socketio.emit('echo_game_list', {"id": game_list.keys()})
 
 
-@app.route('/_get_game/<int:id>', methods=['GET'])
-def get_game(id):
-    return jsonify(game_list[id].__dict__)
+@socketio.on('new_game')
+def handle_new_game(data):
+    global uid
+    uid += 1
+    game_list[uid] = Game(uid)
+
+    socketio.emit('echo_ng', {"uid": str(uid)})

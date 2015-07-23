@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from shiritori import app
+from shiritori import socketio,app
 
 if __name__ == '__main__':
     app.debug = True
-    app.run()
+    socketio.run(app)

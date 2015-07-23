@@ -5,10 +5,12 @@ from flask import Flask
 from flask.ext.sqlalchemy import SQLAlchemy
 from config import Config
 from flask.ext.assets import Environment, Bundle
+from flask.ext.socketio import SocketIO
 
 app = Flask(__name__)
 app.config.from_object(Config)
 db = SQLAlchemy(app)
+socketio = SocketIO(app)
 
 # asset management
 # env = Environment(app)

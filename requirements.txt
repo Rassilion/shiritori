@@ -6,3 +6,5 @@ flask-wtf
 Flask-Assets
 WTForms-Alchemy
 jsmin
+Flask-SocketIO
+gevent

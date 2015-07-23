@@ -1,12 +1,15 @@
 {% extends "layout.html" %}
 {% block content %}
-    <div class="your-form">
-        {{ wtf.render_form(form, action_url=url_for('index'), action_text='Submit Form') }}
+    <div id="container">
+    <ul id="gamelist"></ul>
     </div>
-    <ul>
-        {% for i in list %}
-            <li><a href="{{ url_for('game',id=i) }}">{{ i }} </a></li>
-        {% endfor %}
-    </ul>
+    <div class="input">
+        <form>
+            <button type="button" id="ng">new game</button>
+            <button type="button" id="refresh">refresh</button>
+        </form>
+    </div>
+    <div id="response">
+    </div>
     Rendered in {{ g.request_time() }}
 {% endblock %}
