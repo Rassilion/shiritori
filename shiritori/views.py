@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from flask import render_template, flash, g, jsonify
-from shiritori import app, forms, socketio
+from shiritori import app, forms
 from game import Game
 import time
 import json
@@ -41,15 +41,4 @@ def game(id):
     return render_template('game.html', form=form)
 
 
-@socketio.on('game_list')
-def handle_game_list(data):
-    socketio.emit('echo_game_list', {"id": game_list.keys()})
 
-
-@socketio.on('new_game')
-def handle_new_game(data):
-    global uid
-    uid += 1
-    game_list[uid] = Game(uid)
-
-    socketio.emit('echo_ng', {"uid": str(uid)})

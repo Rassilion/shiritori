@@ -40,3 +40,6 @@ class Game(object):
         self.p2 += len(word)
         self.letter = word[-1]
         self.p2_list.append(word)
+
+
+class Server(object):
