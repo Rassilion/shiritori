@@ -2,11 +2,14 @@
 # -*- coding: utf-8 -*-
 from dictionary import english
 import random
+import uuid
+from sockjs.tornado import SockJSConnection
+import json
 
 
 class Game(object):
     def __init__(self, id):
-        self.id = id
+        self.id = uuid.uuid4()
         self.p1 = 0
         self.p2 = 0
         self.p1_list = []
@@ -42,4 +45,25 @@ class Game(object):
         self.p2_list.append(word)
 
 
-class Server(object):
+class ServerConnection(SockJSConnection):
+    """Chat connection implementation"""
+    # Class level variable
+    participants = {}
+
+    def on_open(self, info):
+        pass
+
+    def on_message(self, message):
+        parsed_massage = json.loads(message)
+        if "user" in parsed_massage:
+            self.participants[parsed_massage["user"]] = self
+            self.broadcast(self.participants.itervalues(), parsed_massage["user"]+" joined.")
+        else:
+            # Broadcast message
+            self.broadcast(self.participants.itervalues(), message)
+
+    def on_close(self):
+        # Remove client from the clients list and broadcast leave message
+        self.participants.remove(self)
+
+        self.broadcast(self.participants.itervalues(), "Someone left.")

@@ -6,13 +6,12 @@ from game import Game
 import time
 import json
 
-game_list = {}
-uid = 1
+
 
 
 @app.before_first_request
 def test():
-    game_list[1] = Game(1)
+    pass
 
 
 @app.before_request
@@ -23,22 +22,12 @@ def before_request():
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    form = forms.CreateForm()
-    if form.validate_on_submit():
-        id = form.id.data
-        game_list[id] = Game(id)
-    return render_template('index.html', list=game_list.keys(), form=form)
+    return render_template('index.html')
 
 
-@app.route('/game/<int:id>', methods=['GET', 'POST'])
-def game(id):
-    form = forms.GameForm()
-    if form.validate_on_submit():
-        if game_list[id].p1_move(form.word.data):
-            flash(u"devam")
-        else:
-            flash(u"yanlış")
-    return render_template('game.html', form=form)
+@app.route('/game', methods=['GET', 'POST'])
+def game():
+    return render_template('game.html')
 
 
 
