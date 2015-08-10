@@ -1,7 +1,8 @@
 /// <reference path="typings/tsd.d.ts" />
 $(function () {
     var conn = null;
-    var user = 1;
+    var user = "player1";
+    var j=null;
 
     function log(msg) {
         var control = $('#log');
@@ -11,10 +12,7 @@ $(function () {
 
     function connect() {
         disconnect();
-        var transports = $('#protocols input:checked').map(function () {
-            return $(this).attr('id');
-        }).get();
-        conn = new SockJS('http://' + window.location.host + '/game1', transports);
+        conn = new SockJS('http://' + window.location.host + '/game1');
         log('Connecting...');
         conn.onopen = function () {
             conn.send(JSON.stringify({user: user}));
@@ -22,7 +20,8 @@ $(function () {
             update_ui();
         };
         conn.onmessage = function (e) {
-            log('Received: ' + e.data);
+            j=jQuery.parseJSON(e.data);
+            log(j.user+': ' + j.text);
         };
         conn.onclose = function () {
             log('Disconnected.');
@@ -63,7 +62,7 @@ $(function () {
     $('#connect2').click(function () {
         if (conn == null) {
             connect();
-            user = 2;
+            user = "player2";
         } else {
             disconnect();
         }
@@ -72,9 +71,9 @@ $(function () {
     });
     $('form').submit(function () {
         var text = $('#text').val();
-        log('Sending: ' + text);
+        var send = {text: text};
 
-        conn.send(text);
+        conn.send(JSON.stringify(send));
         $('#text').val('').focus();
         return false;
     });

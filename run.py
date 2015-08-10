@@ -3,7 +3,6 @@
 from shiritori import app
 
 from tornado.wsgi import WSGIContainer
-from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
 from tornado import web
 from sockjs.tornado import SockJSRouter, SockJSConnection
@@ -17,5 +16,5 @@ EchoRouter = SockJSRouter(ServerConnection, '/game1')
 # add flask to tornado urls
 tornado_app = web.Application(EchoRouter.urls + [('.*', web.FallbackHandler, dict(fallback=wsgi_app)),
                                                  ])
-tornado_app.listen(5000)
+tornado_app.listen(5050)
 IOLoop.instance().start()
