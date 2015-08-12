@@ -1,10 +1,20 @@
 {% extends "layout.html" %}
 {% block content %}
-    <ul class="game">
-    </ul>
-    <div class="your-form">
-        {{ wtf.render_form(form, action_url=url_for('game',id=game.id), action_text='Submit Form') }}
-    </div>
+    <h3>Shiritori!</h3>
+
+
+<div>
+  <a id="connect" href="#">Connect</a>&nbsp;|&nbsp;Status: <span id="status">disconnected</span>
+</div>
+    <div>
+  <a id="connect2" href="#">Connect</a>&nbsp;|&nbsp;Status: <span id="status">disconnected</span>
+</div>
+<div id="log" style="width: 60em; height: 20em; overflow:auto; border: 1px solid black">
+</div>
+<form id="chatform">
+  <input id="text" type="text" />
+  <input type="submit" />
+</form>
 
     Rendered in {{ g.request_time() }}
 {% endblock %}

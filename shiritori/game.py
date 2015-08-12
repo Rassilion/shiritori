@@ -2,11 +2,14 @@
 # -*- coding: utf-8 -*-
 from dictionary import english
 import random
+import uuid
+from sockjs.tornado import SockJSConnection
+import json
 
 
 class Game(object):
-    def __init__(self, id):
-        self.id = id
+    def __init__(self):
+        self.id = uuid.uuid4()
         self.p1 = 0
         self.p2 = 0
         self.p1_list = []
@@ -28,15 +31,59 @@ class Game(object):
             self.p1 += len(word)
             self.letter = word[-1]
             self.p1_list.append(word)
-            self.p2_move()
             return True
         else:
             return False
 
-    def p2_move(self):
+    def p2_move(self, word):
+        if self.check(word):
+            self.p2 += len(word)
+            self.letter = word[-1]
+            self.p2_list.append(word)
+            return True
+        else:
+            return False
+
+    def ai_move(self):
         word = ""
         while (not self.check(word)):
             word = random.choice(english[self.letter])
         self.p2 += len(word)
         self.letter = word[-1]
         self.p2_list.append(word)
+
+
+class ServerConnection(SockJSConnection):
+    """Chat connection implementation"""
+    # Class level variable
+    participants = set()
+    game = Game()
+
+    def on_open(self, info):
+        self.username = ""
+
+    def on_message(self, message):
+        parsed_massage = json.loads(message)
+        if "user" in parsed_massage:
+            self.participants.add(self)
+            self.username = parsed_massage["user"]
+            self.broadcast(self.participants,
+                           json.dumps({'user': 'server', 'text': parsed_massage["user"] + ' joined.'}))
+        else:
+            if self.username == "player1" and self.game.p1_move(parsed_massage["text"]):
+                msg = json.dumps({"user": self.username, "text": parsed_massage["text"]})
+                print msg
+                self.broadcast(self.participants, msg)
+            elif self.game.p2_move(parsed_massage["text"]):
+                msg = json.dumps({"user": self.username, "text": parsed_massage["text"]})
+                print msg
+                self.broadcast(self.participants, msg)
+            else:
+                self.broadcast(self.participants, json.dumps({'user': 'server', 'text': parsed_massage["text"]+' Error'}))
+        self.broadcast(self.participants, json.dumps({'user': 'server', 'text': 'Letter is ' + self.game.letter}))
+
+    def on_close(self):
+        # Remove client from the clients list and broadcast leave message
+        self.participants.remove(self)
+
+        self.broadcast(self.participants, json.dumps({'user': 'server', "text": self.username + " left."}))
