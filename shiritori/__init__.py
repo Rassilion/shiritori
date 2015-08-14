@@ -6,9 +6,15 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from config import Config
 from flask.ext.assets import Environment, Bundle
 
+
 app = Flask(__name__)
 app.config.from_object(Config)
 db = SQLAlchemy(app)
+
+from shiritori.admin import init_admin
+init_admin(app)
+
+
 
 # asset management
 # env = Environment(app)
