@@ -6,7 +6,7 @@ from game import Game
 import time
 import json
 from shiritori.models import user_datastore
-from flask.ext.security import Security
+from flask.ext.security import Security, current_user, auth_token_required
 
 # initilize flask-security
 security = Security(app, user_datastore)
@@ -27,7 +27,21 @@ def before_request():
 def index():
     return render_template('index.html')
 
-
 @app.route('/game', methods=['GET', 'POST'])
 def game():
+
+    try:
+        print current_user.is_authenticated()
+        print g.session
+    except:
+        pass
     return render_template('game.html')
+
+@app.route('/dummy-api/', methods=['GET'])
+@auth_token_required
+def dummyAPI():
+    ret_dict = {
+        "Key1": "Value1",
+        "Key2": "value2"
+    }
+    return jsonify(items=ret_dict)

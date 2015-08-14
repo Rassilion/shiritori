@@ -2,7 +2,10 @@
 $(function () {
     var conn = null;
     var user = "player1";
-    var j=null;
+    var token=Cookies.get("remember_token");
+    connect();
+
+
 
     function log(msg) {
         var control = $('#log');
@@ -15,7 +18,7 @@ $(function () {
         conn = new SockJS('http://' + window.location.host + '/game1');
         log('Connecting...');
         conn.onopen = function () {
-            conn.send(JSON.stringify({user: user}));
+            conn.send(JSON.stringify({auth: token}));
             log('Connected.');
             update_ui();
         };
