@@ -5,8 +5,11 @@ from shiritori import app, forms
 from game import Game
 import time
 import json
+from shiritori.models import user_datastore
+from flask.ext.security import Security
 
-
+# initilize flask-security
+security = Security(app, user_datastore)
 
 
 @app.before_first_request
@@ -28,6 +31,3 @@ def index():
 @app.route('/game', methods=['GET', 'POST'])
 def game():
     return render_template('game.html')
-
-
-

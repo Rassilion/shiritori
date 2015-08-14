@@ -1,5 +1,6 @@
 flask
 flask-sqlalchemy
+flask-security
 flask-admin
 Flask-Script
 flask-wtf
@@ -8,3 +9,4 @@ WTForms-Alchemy
 jsmin
 uuid
 sockjs-tornado
+bcrypt
