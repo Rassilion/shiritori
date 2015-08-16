@@ -10,3 +10,4 @@ jsmin
 uuid
 sockjs-tornado
 bcrypt
+sockjsroom

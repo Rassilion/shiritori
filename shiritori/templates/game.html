@@ -3,19 +3,21 @@
     <h3>Shiritori!</h3>
 
 
-<div>
-  <a id="connect" href="#">Connect</a>&nbsp;|&nbsp;Status: <span id="status">disconnected</span>
-</div>
     <div>
-  <a id="connect2" href="#">Connect</a>&nbsp;|&nbsp;Status: <span id="status">disconnected</span>
-</div>
-<div id="log" style="width: 60em; height: 20em; overflow:auto; border: 1px solid black">
-</div>
-<form id="chatform">
-  <input id="text" type="text" />
-  <input type="submit" />
-</form>
+        <a id="connect" href="#">Connect</a>&nbsp;|&nbsp;Status: <span id="status">disconnected</span>
+    </div>
+    <div>
+        <a id="connect2" href="#">Connect</a>&nbsp;|&nbsp;Status: <span id="status">disconnected</span>
+    </div>
+    <div id="log" style="width: 60em; height: 20em; overflow:auto; border: 1px solid black">
+    </div>
+    <form id="chatform">
+        <input id="text" type="text"/>
+        <input type="submit"/>
+    </form>
 
 
-<script type="text/javascript" src="{{ url_for('static', filename='js/game.js') }}"></script>
+
+    <script type="text/javascript" src="{{ url_for('static', filename='js/socket.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/game.js') }}"></script>
 {% endblock %}

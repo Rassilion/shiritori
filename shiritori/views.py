@@ -27,15 +27,11 @@ def before_request():
 def index():
     return render_template('index.html')
 
+
 @app.route('/game', methods=['GET', 'POST'])
 def game():
-
-    try:
-        print current_user.is_authenticated()
-        print g.session
-    except:
-        pass
     return render_template('game.html')
+
 
 @app.route('/dummy-api/', methods=['GET'])
 @auth_token_required
