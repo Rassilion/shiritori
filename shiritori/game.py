@@ -59,7 +59,7 @@ class Game(object):
         self.p2_list.append(word)
 
     def get_game(self):
-        return json.dumps({"scores": {"p1":self.p1,"p2":self.p2}, "words":{"p1":self.p1_list,"p2":self.p2_list}})
+        return {'p1':{'score':self.p1,'words':self.p1_list},'p2':{'score':self.p2,'words':self.p2_list}}
 
 
 class ServerConnection(SockJSRoomHandler):

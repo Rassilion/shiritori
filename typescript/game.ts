@@ -1,11 +1,10 @@
 /// <reference path="typings/tsd.d.ts" />
+
 $(function () {
 
     var token = Cookies.get("remember_token");
     var sckt = GameRoom('1', token);
-    var scores = null;
-    var words = null;
-    ;
+    var game_status={'p2': {'score': 0, 'words': []}, 'p1': {'score': 0, 'words': []}};
 
 
     /**
@@ -40,7 +39,16 @@ $(function () {
         var control = $('#log');
         control.html(control.html() + msg + '<br/>');
         control.scrollTop(control.scrollTop() + 1000);
-    }
+        print_status()
+    };
+
+    function print_status() {
+        var scores = $('#scores');
+        scores.html( '<li>p1: '+game_status.p1.score + '</li>'+ '<li>p2: '+game_status.p2.score + '</li>');
+        var words = $('#words');
+        words.html('<li>p1: '+game_status.p1.words + '</li>'+'<li>p2: '+game_status.p2.words + '</li>');
+        console.log(game_status.p2.score)
+    };
 
     $('form').submit(function () {
         var text = $('#text').val();
@@ -59,16 +67,20 @@ $(function () {
     });
     sckt.on('leave', function (data) {
         log('User ' + data.username + ' left room');
-    })
+    });
     sckt.on('server', function (data) {
         log('Server: ' + data.message);
-    })
+    });
     sckt.on('move', function (data) {
         log('Server: ' + 'User ' + data.username + ' played ' + data.move);
-    })
+    });
     sckt.on('game_state', function (data) {
-        scores = data.scores;
-        words = data.words;
-    })
+            game_status.p1.score=data.p1.score;
+            game_status.p1.words=data.p1.words;
+            game_status.p2.score=data.p2.score;
+            game_status.p2.words=data.p2.words;
+            print_status()
+        }
+    );
 
 });
