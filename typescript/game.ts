@@ -81,6 +81,7 @@ $(function () {
     sckt.on('server', function (data) {
         if (typeof data.letter !== 'undefined') {
             letter = data.letter;
+            $('#text').attr('placeholder',letter);
         }
         ;
         log('Server: ' + data.message);
