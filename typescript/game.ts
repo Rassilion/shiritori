@@ -52,7 +52,7 @@ $(function () {
     };
 
     $('form').submit(function () {
-        var text = $('#text').val();
+        var text = $('#text').val().toLowerCase();
         if (text.charAt(0) !== letter) {
             log("Client: " + text + " is don't start with " + letter);
         }
