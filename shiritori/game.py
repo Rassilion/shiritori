@@ -58,8 +58,9 @@ class Game(object):
         self.letter = word[-1]
         self.p2_list.append(word)
 
+    # TODO make p1 given userid
     def get_game(self):
-        return {'p1':{'score':self.p1,'words':self.p1_list},'p2':{'score':self.p2,'words':self.p2_list}}
+        return {'p1': {'score': self.p1, 'words': self.p1_list}, 'p2': {'score': self.p2, 'words': self.p2_list}}
 
 
 class ServerConnection(SockJSRoomHandler):
@@ -71,6 +72,7 @@ class ServerConnection(SockJSRoomHandler):
         if self._game.has_key(self._gcls() + _id):
             return self._game[self._gcls() + _id]
         return None
+
     # override leave for perment rooms
     def leave(self, _id):
         """ Leave a room """
@@ -104,37 +106,37 @@ class ServerConnection(SockJSRoomHandler):
 
         self.create(self.roomId)
         self.join(self.roomId)
-        self.game=self.getGame(self.roomId)
-        self.publishToMyself(self.roomId, 'server', {'message': "Letter is " + self.game.letter})
+        self.game = self.getGame(self.roomId)
+        self.publishToMyself(self.roomId, 'server', {'letter': self.game.letter,'message': "Letter is " + self.game.letter})
         self.publishToMyself(self.roomId, 'game_state', self.game.get_game())
         self.publishToOther(self.roomId, 'join', {
             'username': self.userid
         })
 
     def on_move(self, data):
-        print "move"
         if self.roomId != '-1':
-            if self.userid == 1 and self.game.p1_move(data["move"]):
+            if self.userid == '1' and self.game.p1_move(data["move"]):
                 self.publishToRoom(self.roomId, 'move', {
                     'username': self.userid,
                     'time': datetime.now(),
                     'move': str(data['move'])
                 })
-                self.publishToRoom(self.roomId, 'server', {'message': "Letter is " + self.game.letter})
+                self.publishToRoom(self.roomId, 'server', {'letter': self.game.letter,'message': "Letter is " + self.game.letter})
             elif self.game.p2_move(data["move"]):
                 self.publishToRoom(self.roomId, 'move', {
                     'username': self.userid,
                     'time': datetime.now(),
                     'move': str(data['move'])
                 })
-                self.publishToRoom(self.roomId, 'server', {'message': "Letter is " + self.game.letter})
+                self.publishToRoom(self.roomId, 'server', {'letter': self.game.letter,'message': "Letter is " + self.game.letter})
             else:
                 # TODO: Error handler
                 self.publishToRoom(self.roomId, 'server', {
                     'time': datetime.now(),
                     'message': str(data['move'] + " error")
                 })
-                self.publishToRoom(self.roomId, 'server', {'message': "Letter is " + self.game.letter})
+                self.publishToRoom(self.roomId, 'server',
+                                   {'letter': self.game.letter, 'message': "Letter is " + self.game.letter})
 
     def on_close(self):
         self.on_leave()
