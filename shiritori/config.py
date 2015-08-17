@@ -11,7 +11,7 @@ class Config(object):
     # log
     LOG_LEVEL = logging.DEBUG
     SYS_ADMINS = ['foo@example.com']
-    SITE_NAME = 'ProjectC'
+    SITE_NAME = 'Shiritori'
 
     basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -27,8 +27,8 @@ class Config(object):
     MAIL_SERVER = 'mailtrap.io'
     MAIL_PORT = 2525
     MAIL_USE_SSL = False
-    MAIL_USERNAME = '3780042a77f82155c'
-    MAIL_PASSWORD = 'acffb68341777f'
+    MAIL_USERNAME = ''
+    MAIL_PASSWORD = ''
 
     # security
     SECURITY_PASSWORD_HASH = 'bcrypt'
