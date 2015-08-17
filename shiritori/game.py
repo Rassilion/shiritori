@@ -101,17 +101,20 @@ class ServerConnection(SockJSRoomHandler):
 
     def on_join(self, data):
         # TODO: DB check
-        self.userid = s.loads(data["token"])[0]
-        self.roomId = str(data['roomId'])
+        if "token" not in data:
+            self.publishToMyself(self.roomId, 'auth_error',{})
+        else:
+            self.userid = s.loads(data["token"])[0]
+            self.roomId = str(data['roomId'])
 
-        self.create(self.roomId)
-        self.join(self.roomId)
-        self.game = self.getGame(self.roomId)
-        self.publishToMyself(self.roomId, 'server', {'letter': self.game.letter,'message': "Letter is " + self.game.letter})
-        self.publishToMyself(self.roomId, 'game_state', self.game.get_game())
-        self.publishToOther(self.roomId, 'join', {
-            'username': self.userid
-        })
+            self.create(self.roomId)
+            self.join(self.roomId)
+            self.game = self.getGame(self.roomId)
+            self.publishToMyself(self.roomId, 'server', {'letter': self.game.letter,'message': "Letter is " + self.game.letter})
+            self.publishToMyself(self.roomId, 'game_state', self.game.get_game())
+            self.publishToOther(self.roomId, 'join', {
+                'username': self.userid
+            })
 
     def on_move(self, data):
         if self.roomId != '-1':

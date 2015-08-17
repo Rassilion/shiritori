@@ -78,6 +78,10 @@ $(function () {
     sckt.on('leave', function (data) {
         log('User ' + data.username + ' left room');
     });
+    sckt.on('auth_error', function (data) {
+        log('auth error');
+        sckt.disconnect();
+    });
     sckt.on('server', function (data) {
         if (typeof data.letter !== 'undefined') {
             letter = data.letter;
