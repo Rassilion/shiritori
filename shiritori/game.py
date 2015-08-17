@@ -3,7 +3,7 @@
 from datetime import datetime
 import logging
 from itsdangerous import URLSafeTimedSerializer
-from dictionary import english
+from dictionary import english, turkish
 import random
 import uuid
 from sockjsroom import SockJSRoomHandler
@@ -26,8 +26,7 @@ class Game(object):
         return str(self.id)
 
     def check(self, word):
-        if word.startswith(self.letter) and word not in self.p1_list and word not in self.p2_list and word in english[
-            self.letter]:
+        if word.startswith(self.letter) and word not in self.p1_list and word not in self.p2_list and word in english:
             return True
         else:
             return False
@@ -83,6 +82,7 @@ class ServerConnection(SockJSRoomHandler):
         if not self._room.has_key(self._gcls() + _id):
             self._room[self._gcls() + _id] = set()
             self._game[self._gcls() + _id] = Game(_id)
+        print len(self._game)
 
     def join(self, _id):
         """ Join a room """
@@ -101,18 +101,23 @@ class ServerConnection(SockJSRoomHandler):
 
     def on_join(self, data):
         # TODO: DB check
+        # basic auth check
         if "token" not in data:
-            self.publishToMyself(self.roomId, 'auth_error',{})
+            self.publishToMyself(self.roomId, 'auth_error', {})
         else:
+            # set user information
             self.userid = s.loads(data["token"])[0]
             self.roomId = str(data['roomId'])
-
+            # join room
             self.create(self.roomId)
             self.join(self.roomId)
+            # get game of joined room
             self.game = self.getGame(self.roomId)
-            self.publishToMyself(self.roomId, 'server', {'letter': self.game.letter,'message': "Letter is " + self.game.letter})
+            # inform clients
+            self.publishToMyself(self.roomId, 'server',
+                                 {'letter': self.game.letter, 'message': "Letter is " + self.game.letter})
             self.publishToMyself(self.roomId, 'game_state', self.game.get_game())
-            self.publishToOther(self.roomId, 'join', {
+            self.publishToRoom(self.roomId, 'join', {
                 'username': self.userid
             })
 
@@ -124,14 +129,16 @@ class ServerConnection(SockJSRoomHandler):
                     'time': datetime.now(),
                     'move': str(data['move'])
                 })
-                self.publishToRoom(self.roomId, 'server', {'letter': self.game.letter,'message': "Letter is " + self.game.letter})
+                self.publishToRoom(self.roomId, 'server',
+                                   {'letter': self.game.letter, 'message': "Letter is " + self.game.letter})
             elif self.game.p2_move(data["move"]):
                 self.publishToRoom(self.roomId, 'move', {
                     'username': self.userid,
                     'time': datetime.now(),
                     'move': str(data['move'])
                 })
-                self.publishToRoom(self.roomId, 'server', {'letter': self.game.letter,'message': "Letter is " + self.game.letter})
+                self.publishToRoom(self.roomId, 'server',
+                                   {'letter': self.game.letter, 'message': "Letter is " + self.game.letter})
             else:
                 # TODO: Error handler
                 self.publishToRoom(self.roomId, 'server', {

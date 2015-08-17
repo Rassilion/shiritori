@@ -1,8 +1,8 @@
 {% extends "layout.html" %}
-{% block content %}
-    <div id="container">
+{% block content %}<br><br><br><br>
+    <h3>Shiritori!</h3>
     <ul id="gamelist"></ul>
-    </div>
+
     <div class="input">
         <form>
             <button type="button" id="ng">new game</button>
@@ -11,5 +11,4 @@
     </div>
     <div id="response">
     </div>
-    Rendered in {{ g.request_time() }}
 {% endblock %}
