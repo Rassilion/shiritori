@@ -11,7 +11,7 @@ var socket = function(namespace) {
 	// The base url
 	this._url       = '//' + window.location.hostname;
 	// The base port
-	this._port      = 5000;
+	this._port      = window.location.port;
 	// Store the SockJS instance
 	this._socket    = null;
 	// Store the namespace

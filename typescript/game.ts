@@ -1,9 +1,26 @@
 /// <reference path="typings/tsd.d.ts" />
 
-$(function () {
+$(function main() {
+    var qs = (function (a) {
+        if (a == "") return {};
+        var b = {};
+        for (var i = 0; i < a.length; ++i) {
+            var p = a[i].split('=', 2);
+            if (p.length == 1)
+                b[p[0]] = "";
+            else
+                b[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
+        }
+        return b;
+    })(window.location.search.substr(1).split('&'));
 
     var token = Cookies.get("remember_token");
-    var sckt = GameRoom('1', token);
+    var roomid = qs["id"];
+    if (roomid === undefined) {
+        roomid = '1';
+    }
+    ;
+    var sckt = GameRoom(roomid, token);
     var game_status = {'p2': {'score': 0, 'words': []}, 'p1': {'score': 0, 'words': []}};
     var letter;
 
@@ -45,13 +62,13 @@ $(function () {
 
     function print_status() {
         var scores = $('#scores');
-        scores.html('<li>p1: ' + game_status.p1.score + '</li>' + '<li>p2: ' + game_status.p2.score + '</li>' + '<li>Letter: ' + letter + '</li>');
+        scores.html('<li>roomid: ' + roomid + '</li>' +'<li>p1: ' + game_status.p1.score + '</li>' + '<li>p2: ' + game_status.p2.score + '</li>' + '<li>Letter: ' + letter + '</li>');
         var words = $('#words');
         words.html('<li>p1: ' + game_status.p1.words + '</li>' + '<li>p2: ' + game_status.p2.words + '</li>');
 
     };
 
-    $('form').submit(function () {
+    $('#move').submit(function () {
         var text = $('#text').val().toLowerCase();
         if (text.charAt(0) !== letter) {
             log("Client: " + text + " is don't start with " + letter);
@@ -78,10 +95,14 @@ $(function () {
     sckt.on('leave', function (data) {
         log('User ' + data.username + ' left room');
     });
+    sckt.on('auth_error', function (data) {
+        log('auth error');
+        sckt.disconnect();
+    });
     sckt.on('server', function (data) {
         if (typeof data.letter !== 'undefined') {
             letter = data.letter;
-            $('#text').attr('placeholder',letter);
+            $('#text').attr('placeholder', letter);
         }
         ;
         log('Server: ' + data.message);
