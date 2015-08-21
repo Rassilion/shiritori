@@ -3,14 +3,32 @@
 from datetime import datetime
 import logging
 from itsdangerous import URLSafeTimedSerializer
-from dictionary import english, turkish
+from .dictionary import english
 import random
+import hashlib
 import uuid
 from sockjsroom import SockJSRoomHandler
 import json
-from config import Config
+from .config import Config
+from werkzeug.security import safe_str_cmp
+from .models import User
 
+# temp config variables
+token_max_age = None
 s = URLSafeTimedSerializer(secret_key=Config.SECRET_KEY, salt='remember-salt')
+
+
+def encode_string(string):
+    """Encodes a string to bytes, if it isn't already.
+    :param string: The string to encode"""
+
+    if isinstance(string, unicode):
+        string = string.encode('utf-8')
+    return string
+
+
+def md5(data):
+    return hashlib.md5(encode_string(data)).hexdigest()
 
 
 class Game(object):
@@ -99,14 +117,22 @@ class ServerConnection(SockJSRoomHandler):
         self.userid = None
         self.roomId = '-1'
 
+    def token_loader(self, token):
+        try:
+            data = s.loads(token, max_age=token_max_age)
+            user = User.query.filter_by(id=data[0]).first()
+            if user and safe_str_cmp(md5(user.password), data[1]):
+                self.userid = data[0]
+                return True
+        except:
+            pass
+        return False
+
     def on_join(self, data):
-        # TODO: DB check
         # basic auth check
         if "token" not in data:
             self.publishToMyself(self.roomId, 'auth_error', {})
-        else:
-            # set user information
-            self.userid = s.loads(data["token"])[0]
+        elif self.token_loader(data["token"]):
             self.roomId = str(data['roomId'])
             # join room
             self.create(self.roomId)
