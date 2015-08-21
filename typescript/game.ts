@@ -17,9 +17,11 @@ $(function main() {
     var token = Cookies.get("remember_token");
     var roomid = qs["id"];
     if (roomid === undefined) {
-        roomid = '1';
+        roomid = 'lobby';
+        $('#game').addClass('collapse')
+    } else {
+        $('#lobby').addClass('collapse')
     }
-    ;
     var user;
     var sckt = GameRoom(roomid, token);
     var game_status = {};
@@ -40,19 +42,45 @@ $(function main() {
 
         // On every connect, the server 'loose' us
         // so we have to join again
-        sckt.on('connect', function () {
-            // Everytime a connect appear, we have to logon again
-            this.emit('join', {
-                token: token,
-                roomId: roomId
-            });
-        }, sckt);
+        if (roomId === 'lobby') {
+            sckt.on('connect', function () {
+                this.emit('auth', {
+                    token: token
+                });
+                sckt.emit('game_list', {});
+            }, sckt);
+        }
+        else {
+            sckt.on('connect', function () {
+                this.emit('auth', {
+                    token: token
+                });
+                this.emit('join', {
+                    roomId: roomId
+                });
+            }, sckt);
+        }
 
         // Start socket instance
         sckt.connect();
 
         return sckt;
     };
+
+    $('#refresh').click(function () {
+        sckt.emit('game_list', {});
+    });
+    $('#gamelist').on('click', 'tr', function () {
+        var uuid = $(this).attr("uuid");
+        roomid = uuid;
+        sckt.emit('join', {roomId: uuid});
+        $('#lobby').addClass('collapse');
+        $('#game').removeClass('collapse');
+    });
+    $('#create').on('click', function () {
+        var dict = $('#dict').val();
+        sckt.emit('create', {dict: dict});
+    });
 
     function log(msg) {
         var control = $('#log');
@@ -63,14 +91,14 @@ $(function main() {
 
     function print_status() {
         var scores = $('#scores');
-        scores.html('<li>user: ' + user + '</li>' + '<li>roomid: ' + roomid + '</li>' + '<li>Letter: ' + letter + '</li>');
+        scores.html('<li class="list-group-item">user: ' + user + '</li>' + '<li class="list-group-item">roomid: ' + roomid + '</li>'+'<li class="list-group-item">url: '+window.location.hostname+'/game?id='+roomid + '<li class="list-group-item">Letter: ' + letter + '</li>');
         for (var p in game_status) {
-            scores.html(scores.html()+'<li>'+p+': ' + game_status[p].score + '</li>');
+            scores.html(scores.html() + '<li class="list-group-item">' + p + ': ' + game_status[p].score + '</li>');
         }
         var words = $('#words');
         words.html(' ');
         for (var p in game_status) {
-            words.html(words.html()+'<li>'+p+': ' + game_status[p].words + '</li>');
+            words.html(words.html() + '<li class="list-group-item">' + p + ': ' + game_status[p].words + '</li>');
         }
 
     };
@@ -130,5 +158,20 @@ $(function main() {
             print_status()
         }
     );
+    sckt.on('game_list', function (data) {
+            $('#gamelist').html('');
+            for (var p in data.list) {
+                $('#gamelist').append('<tr uuid="' + data.list[p].uuid + '"><td>' + data.list[p].dict + '</td><td>' + data.list[p].uuid + '</td></tr>');
+            }
+        }
+    );
+    sckt.on('create', function (data) {
+            roomid = data.roomid;
+            sckt.emit('join', {roomId: roomid});
+            $('#lobby').addClass('collapse');
+            $('#game').removeClass('collapse');
+        }
+    );
+
 
 });

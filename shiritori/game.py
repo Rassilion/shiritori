@@ -32,11 +32,18 @@ def md5(data):
 
 
 class Game(object):
-    def __init__(self, id, dictionary):
+    def get_dictionary(self, code):
+        if code == 'tr':
+            return turkish
+        if code == 'en':
+            return english
+
+    def __init__(self, id, code):
         self.uuid = id
         self.players = {}
         # game dictionary
-        self.dictionary = dictionary
+        self.dictionary_code = code
+        self.dictionary = self.get_dictionary(code)
 
         # TODO game types
         self.mode = None
@@ -85,9 +92,11 @@ class Game(object):
     def get_game(self):
         return self.players
 
+    def game_info(self):
+        return {'dict': self.dictionary_code, 'uuid': self.uuid}
+
 
 class ServerConnection(SockJSRoomHandler):
-    # Class level variable
     _game = {}
 
     def getGame(self, _id):
@@ -106,7 +115,6 @@ class ServerConnection(SockJSRoomHandler):
         if not self._room.has_key(self._gcls() + _id):
             self._room[self._gcls() + _id] = set()
             self._game[self._gcls() + _id] = Game(_id, dict)
-        print len(self._game)
 
     def join(self, _id):
         """ Join a room """
@@ -119,12 +127,23 @@ class ServerConnection(SockJSRoomHandler):
             self._game[self._gcls() + _id].add_player(self.userid, self.username)
 
     def on_open(self, info):
-        self.init()
+        # TODO better way for lobby creation
+        if not self._room.has_key(self._gcls() + 'lobby'):
+            self._room[self._gcls() + 'lobby'] = set()
+            self._game[self._gcls() + 'lobby'] = Game('lobby', 'en')
+        if not self._room.has_key(self._gcls() + 'sad'):
+            self._room[self._gcls() + 'sad'] = set()
+            self._game[self._gcls() + 'sad'] = Game('sad', 'en')
+        if not self._room.has_key(self._gcls() + 'bs'):
+            self._room[self._gcls() + 'bs'] = set()
+            self._game[self._gcls() + 'bs'] = Game('bs', 'en')
 
-    def init(self):
+    def __init__(self, session):
+        super(ServerConnection, self).__init__(session)
         self.userid = None
         self.roomId = '-1'
         self.username = ''
+        self.isAuthenticated = False
 
     def token_loader(self, token):
         try:
@@ -141,47 +160,65 @@ class ServerConnection(SockJSRoomHandler):
             pass
         return False
 
-    def on_join(self, data):
-        # basic auth check
+    def on_auth(self, data):
         if "token" not in data:
             self.publishToMyself(self.roomId, 'auth_error', {})
+            self.isAuthenticated = False
         elif self.token_loader(data["token"]):
+            self.publishToMyself(self.roomId, 'auth_succes', {})
+            self.isAuthenticated = True
+        else:
+            self.publishToMyself(self.roomId, 'auth_error', {})
+            self.isAuthenticated = False
+
+    def on_game_list(self, data):
+        list = []
+        for game in self._game.itervalues():
+            list.append(game.game_info())
+        self.publishToMyself(self.roomId, 'game_list', {'list': list})
+
+    def on_join(self, data):
+        # basic auth check
+        if self.isAuthenticated:
             self.roomId = str(data['roomId'])
             # join room
-            # For test
-            if int(self.roomId) % 2 == 0:
-                self.create(self.roomId, turkish)
-            else:
-                self.create(self.roomId, english)
             self.join(self.roomId)
             # get game of joined room
             self.game = self.getGame(self.roomId)
             # inform clients
             self.publishToMyself(self.roomId, 'server',
-                                 {'letter': self.game.letter, 'message': "Letter is " + self.game.letter})
+                                 {'letter': self.game.letter, 'message': u"Letter is " + self.game.letter})
             self.publishToMyself(self.roomId, 'game_state', self.game.get_game())
             self.publishToRoom(self.roomId, 'join', {
                 'username': self.username
             })
 
     def on_move(self, data):
-        if self.roomId != '-1':
-            if self.game.player_move(self.userid, data["move"]):
+        if self.isAuthenticated:
+            move = data["move"].encode('utf-8')
+            if self.game.player_move(self.userid, move):
                 self.publishToRoom(self.roomId, 'move', {
                     'username': self.username,
                     'time': datetime.now(),
-                    'move': str(data['move'])
+                    'move': move
                 })
                 self.publishToRoom(self.roomId, 'server',
-                                   {'letter': self.game.letter, 'message': "Letter is " + self.game.letter})
+                                   {'letter': self.game.letter, 'message': u"Letter is " + self.game.letter})
             else:
                 # TODO: Error handler
                 self.publishToRoom(self.roomId, 'server', {
                     'time': datetime.now(),
-                    'message': str(data['move'] + " error")
+                    'message': move + u" error"
                 })
                 self.publishToRoom(self.roomId, 'server',
-                                   {'letter': self.game.letter, 'message': "Letter is " + self.game.letter})
+                                   {'letter': self.game.letter, 'message': u"Letter is " + self.game.letter})
+
+    def on_create(self, data):
+        if self.isAuthenticated:
+            id = str(uuid.uuid4())
+            self.create(id, data['dict'])
+            self.publishToMyself(self.roomId, 'create',
+                                 {'roomid': id})
 
     def on_close(self):
         self.on_leave()
@@ -201,4 +238,5 @@ class ServerConnection(SockJSRoomHandler):
 
             # Remove sockjsroom link to this room
             self.leave(self.roomId)
-        self.init()
+        self.roomId = '-1'
+        self.isAuthenticated = False

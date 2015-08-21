@@ -1,20 +1,79 @@
 {% extends "layout.html" %}
 {% block content %}
-    <h3>Shiritori!</h3>
+    <div id="lobby" class="col-sm-12">
+        <div class="btn-group" role="group" aria-label="...">
+            <button type="button" class="btn btn-default" id="refresh">Refresh</button>
+            <button type="button" class="btn btn-default" data-toggle="modal" data-target="#create-page">Create</button>
+        </div>
+        <table class="table table-hover">
+            <thead>
+            <tr>
+                <th>dict</th>
+                <th>uuid</th>
+            </tr>
+            </thead>
+            <tbody id="gamelist">
+
+            </tbody>
+        </table>
+    </div>
+
+    <div id="create-page" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">New Game</h4>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal" role="form">
+                        <div class="form-group">
+                            <label class="control-label col-sm-2" for="dict">Dict:</label>
+
+                            <div class="col-sm-10">
+                                <select id='dict' class="form-control">
+                                    <option value="tr">Turkish</option>
+                                    <option value="en">English</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label col-sm-2" for="pwd">Password:</label>
+
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="pwd" placeholder="Enter password">
+                            </div>
+                        </div>
 
 
-    <div>
-        <ul id="scores"><li></li></ul>
-        <ul id="words"><li></li></ul>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button id="create" type="button" class="btn btn-default" data-dismiss="modal">Create</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+
+        </div>
     </div>
-    <div id="log" style="width: 60em; height: 20em; overflow:auto; border: 1px solid black">
+
+    <div id="game" class="col-sm-12 ">
+        <div>
+            <ul class="list-group" id="scores"></ul>
+            <ul class="list-group" id="words"></ul>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-body" id="log"></div>
+        </div>
+        <form id="move">
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="a" id="text">
+                <input type="submit">
+            </div>
+        </form>
     </div>
-    <form id="move">
-        <div class="input-group">
-  <input type="text" class="form-control" placeholder="a" id="text">
-</div>
-        <input type="submit"/>
-    </form>
 
 
 
