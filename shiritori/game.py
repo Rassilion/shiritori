@@ -87,7 +87,6 @@ class Game(object):
 
 
 class ServerConnection(SockJSRoomHandler):
-    # Class level variable
     _game = {}
 
     def getGame(self, _id):
@@ -106,7 +105,6 @@ class ServerConnection(SockJSRoomHandler):
         if not self._room.has_key(self._gcls() + _id):
             self._room[self._gcls() + _id] = set()
             self._game[self._gcls() + _id] = Game(_id, dict)
-        print len(self._game)
 
     def join(self, _id):
         """ Join a room """
@@ -119,12 +117,16 @@ class ServerConnection(SockJSRoomHandler):
             self._game[self._gcls() + _id].add_player(self.userid, self.username)
 
     def on_open(self, info):
-        self.init()
+        # TODO better way for lobby creation
+        if not self._room.has_key(self._gcls() + 'lobby'):
+            self._room[self._gcls() + 'lobby'] = set()
 
-    def init(self):
+    def __init__(self, session):
+        super(ServerConnection, self).__init__(session)
         self.userid = None
         self.roomId = '-1'
         self.username = ''
+        self.isAuthenticated = False;
 
     def token_loader(self, token):
         try:
@@ -141,11 +143,18 @@ class ServerConnection(SockJSRoomHandler):
             pass
         return False
 
-    def on_join(self, data):
-        # basic auth check
+    def on_auth(self, data):
         if "token" not in data:
             self.publishToMyself(self.roomId, 'auth_error', {})
         elif self.token_loader(data["token"]):
+            self.publishToMyself(self.roomId, 'auth_succes', {})
+            self.isAuthenticated = True
+        else:
+            self.publishToMyself(self.roomId, 'auth_error', {})
+
+    def on_join(self, data):
+        # basic auth check
+        if self.isAuthenticated:
             self.roomId = str(data['roomId'])
             # join room
             # For test
@@ -165,7 +174,7 @@ class ServerConnection(SockJSRoomHandler):
             })
 
     def on_move(self, data):
-        if self.roomId != '-1':
+        if self.isAuthenticated:
             if self.game.player_move(self.userid, data["move"]):
                 self.publishToRoom(self.roomId, 'move', {
                     'username': self.username,
@@ -182,6 +191,13 @@ class ServerConnection(SockJSRoomHandler):
                 })
                 self.publishToRoom(self.roomId, 'server',
                                    {'letter': self.game.letter, 'message': "Letter is " + self.game.letter})
+
+    def on_create(self, data):
+        if self.isAuthenticated:
+            id = uuid.uuid4()
+            self.create(id, data.dict)
+            self.publishToMyself(self.roomId, 'create',
+                                 {'roomid': id})
 
     def on_close(self):
         self.on_leave()
@@ -201,4 +217,4 @@ class ServerConnection(SockJSRoomHandler):
 
             # Remove sockjsroom link to this room
             self.leave(self.roomId)
-        self.init()
+        self.roomId = '-1'

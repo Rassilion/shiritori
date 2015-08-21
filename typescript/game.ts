@@ -17,9 +17,11 @@ $(function main() {
     var token = Cookies.get("remember_token");
     var roomid = qs["id"];
     if (roomid === undefined) {
-        roomid = '1';
+        roomid = 'lobby';
+        $('#game').addClass('collapse')
+    }else{
+        $('#lobby').addClass('collapse')
     }
-    ;
     var user;
     var sckt = GameRoom(roomid, token);
     var game_status = {};

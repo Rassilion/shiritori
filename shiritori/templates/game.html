@@ -1,20 +1,37 @@
 {% extends "layout.html" %}
 {% block content %}
-    <h3>Shiritori!</h3>
-
-
-    <div>
-        <ul id="scores"><li></li></ul>
-        <ul id="words"><li></li></ul>
+    <div id="lobby" class="col-sm-12">
+        <table class="table table-hover">
+            <thead>
+            <tr>
+                <th>dict</th>
+                <th>uuid</th>
+            </tr>
+            </thead>
+            <tr>
+                <td>i</td>
+                <td>uuid</td>
+            </tr>
+        </table>
     </div>
-    <div id="log" style="width: 60em; height: 20em; overflow:auto; border: 1px solid black">
+
+    <div id="game" class="col-sm-12 ">
+        <div>
+            <ul id="scores">
+                <li></li>
+            </ul>
+            <ul id="words">
+                <li></li>
+            </ul>
+        </div>
+        <div id="log" style="width: 60em; height: 20em; overflow:auto; border: 1px solid black">
+        </div>
+        <form id="move">
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="a" id="text">
+            </div>
+        </form>
     </div>
-    <form id="move">
-        <div class="input-group">
-  <input type="text" class="form-control" placeholder="a" id="text">
-</div>
-        <input type="submit"/>
-    </form>
 
 
 
