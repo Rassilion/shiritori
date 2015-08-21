@@ -91,7 +91,7 @@ $(function main() {
 
     function print_status() {
         var scores = $('#scores');
-        scores.html('<li class="list-group-item">user: ' + user + '</li>' + '<li class="list-group-item">roomid: ' + roomid + '</li>' + '<li class="list-group-item">Letter: ' + letter + '</li>');
+        scores.html('<li class="list-group-item">user: ' + user + '</li>' + '<li class="list-group-item">roomid: ' + roomid + '</li>'+'<li class="list-group-item">url: '+window.location.hostname+'/game?id='+roomid + '<li class="list-group-item">Letter: ' + letter + '</li>');
         for (var p in game_status) {
             scores.html(scores.html() + '<li class="list-group-item">' + p + ': ' + game_status[p].score + '</li>');
         }
