@@ -8,27 +8,27 @@
                 <th>uuid</th>
             </tr>
             </thead>
+            <tbody id="gamelist">
             <tr>
                 <td>i</td>
                 <td>uuid</td>
             </tr>
+            </tbody>
         </table>
     </div>
 
     <div id="game" class="col-sm-12 ">
         <div>
-            <ul id="scores">
-                <li></li>
-            </ul>
-            <ul id="words">
-                <li></li>
-            </ul>
+            <ul class="list-group" id="scores"></ul>
+            <ul class="list-group" id="words"></ul>
         </div>
-        <div id="log" style="width: 60em; height: 20em; overflow:auto; border: 1px solid black">
+        <div class="panel panel-default">
+            <div class="panel-body" id="log"></div>
         </div>
         <form id="move">
             <div class="input-group">
                 <input type="text" class="form-control" placeholder="a" id="text">
+                <input type="submit">
             </div>
         </form>
     </div>

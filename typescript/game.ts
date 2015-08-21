@@ -19,7 +19,7 @@ $(function main() {
     if (roomid === undefined) {
         roomid = 'lobby';
         $('#game').addClass('collapse')
-    }else{
+    } else {
         $('#lobby').addClass('collapse')
     }
     var user;
@@ -42,13 +42,24 @@ $(function main() {
 
         // On every connect, the server 'loose' us
         // so we have to join again
-        sckt.on('connect', function () {
-            // Everytime a connect appear, we have to logon again
-            this.emit('join', {
-                token: token,
-                roomId: roomId
-            });
-        }, sckt);
+        if (roomId === 'lobby') {
+            sckt.on('connect', function () {
+                this.emit('auth', {
+                    token: token
+                });
+                sckt.emit('game_list', {});
+            }, sckt);
+        }
+        else {
+            sckt.on('connect', function () {
+                this.emit('auth', {
+                    token: token
+                });
+                this.emit('join', {
+                    roomId: roomId
+                });
+            }, sckt);
+        }
 
         // Start socket instance
         sckt.connect();
@@ -65,14 +76,14 @@ $(function main() {
 
     function print_status() {
         var scores = $('#scores');
-        scores.html('<li>user: ' + user + '</li>' + '<li>roomid: ' + roomid + '</li>' + '<li>Letter: ' + letter + '</li>');
+        scores.html('<li class="list-group-item">user: ' + user + '</li>' + '<li class="list-group-item">roomid: ' + roomid + '</li>' + '<li class="list-group-item">Letter: ' + letter + '</li>');
         for (var p in game_status) {
-            scores.html(scores.html()+'<li>'+p+': ' + game_status[p].score + '</li>');
+            scores.html(scores.html() + '<li class="list-group-item">' + p + ': ' + game_status[p].score + '</li>');
         }
         var words = $('#words');
         words.html(' ');
         for (var p in game_status) {
-            words.html(words.html()+'<li>'+p+': ' + game_status[p].words + '</li>');
+            words.html(words.html() + '<li class="list-group-item">' + p + ': ' + game_status[p].words + '</li>');
         }
 
     };
@@ -132,5 +143,13 @@ $(function main() {
             print_status()
         }
     );
+    sckt.on('game_list', function (data) {
+            for (var p in data.list) {
+                console.log(data.list[p])
+            }
+            print_status()
+        }
+    );
+
 
 });
