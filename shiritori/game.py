@@ -187,7 +187,7 @@ class ServerConnection(SockJSRoomHandler):
             self.game = self.getGame(self.roomId)
             # inform clients
             self.publishToMyself(self.roomId, 'server',
-                                 {'letter': self.game.letter, 'message': "Letter is " + self.game.letter})
+                                 {'letter': self.game.letter, 'message': u"Letter is " + self.game.letter})
             self.publishToMyself(self.roomId, 'game_state', self.game.get_game())
             self.publishToRoom(self.roomId, 'join', {
                 'username': self.username
@@ -195,22 +195,23 @@ class ServerConnection(SockJSRoomHandler):
 
     def on_move(self, data):
         if self.isAuthenticated:
-            if self.game.player_move(self.userid, data["move"]):
+            move = data["move"].encode('utf-8')
+            if self.game.player_move(self.userid, move):
                 self.publishToRoom(self.roomId, 'move', {
                     'username': self.username,
                     'time': datetime.now(),
-                    'move': str(data['move'])
+                    'move': move
                 })
                 self.publishToRoom(self.roomId, 'server',
-                                   {'letter': self.game.letter, 'message': "Letter is " + self.game.letter})
+                                   {'letter': self.game.letter, 'message': u"Letter is " + self.game.letter})
             else:
                 # TODO: Error handler
                 self.publishToRoom(self.roomId, 'server', {
                     'time': datetime.now(),
-                    'message': str(data['move'] + " error")
+                    'message': move + u" error"
                 })
                 self.publishToRoom(self.roomId, 'server',
-                                   {'letter': self.game.letter, 'message': "Letter is " + self.game.letter})
+                                   {'letter': self.game.letter, 'message': u"Letter is " + self.game.letter})
 
     def on_create(self, data):
         if self.isAuthenticated:
