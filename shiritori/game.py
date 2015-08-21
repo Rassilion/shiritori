@@ -53,9 +53,9 @@ class Game(object):
     def __repr__(self):
         return str(self.uuid)
 
-    def add_player(self, id):
+    def add_player(self, id, name):
         if id not in self.players:
-            self.players[id] = {'score': 0, 'words': []}
+            self.players[id] = {'name': name, 'score': 0, 'words': []}
 
     def check(self, word):
         if word.startswith(
@@ -81,7 +81,7 @@ class Game(object):
     #     self.letter = word[-1]
     #     self.p2_words.append(word)
 
-    # TODO make p1 given userid
+    # TODO hide userid
     def get_game(self):
         return self.players
 
@@ -116,7 +116,7 @@ class ServerConnection(SockJSRoomHandler):
         else:
             self._room[self._gcls() + _id].add(self)
             # add player to game
-            self._game[self._gcls() + _id].add_player(self.userid)
+            self._game[self._gcls() + _id].add_player(self.userid, self.username)
 
     def on_open(self, info):
         self.init()
@@ -133,6 +133,9 @@ class ServerConnection(SockJSRoomHandler):
             if user and safe_str_cmp(md5(user.password), data[1]):
                 self.userid = data[0]
                 self.username = user.username
+                # give client to username
+                self.publishToMyself(self.roomId, 'auth',
+                                     {'username': self.username})
                 return True
         except:
             pass

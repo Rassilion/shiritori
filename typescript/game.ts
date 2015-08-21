@@ -20,8 +20,9 @@ $(function main() {
         roomid = '1';
     }
     ;
+    var user;
     var sckt = GameRoom(roomid, token);
-    var game_status = {'p2': {'score': 0, 'words': []}, 'p1': {'score': 0, 'words': []}};
+    var game_status = {};
     var letter;
 
 
@@ -62,9 +63,15 @@ $(function main() {
 
     function print_status() {
         var scores = $('#scores');
-        scores.html('<li>roomid: ' + roomid + '</li>' +'<li>p1: ' + game_status.p1.score + '</li>' + '<li>p2: ' + game_status.p2.score + '</li>' + '<li>Letter: ' + letter + '</li>');
+        scores.html('<li>user: ' + user + '</li>' + '<li>roomid: ' + roomid + '</li>' + '<li>Letter: ' + letter + '</li>');
+        for (var p in game_status) {
+            scores.html(scores.html()+'<li>'+p+': ' + game_status[p].score + '</li>');
+        }
         var words = $('#words');
-        words.html('<li>p1: ' + game_status.p1.words + '</li>' + '<li>p2: ' + game_status.p2.words + '</li>');
+        words.html(' ');
+        for (var p in game_status) {
+            words.html(words.html()+'<li>'+p+': ' + game_status[p].words + '</li>');
+        }
 
     };
 
@@ -73,7 +80,7 @@ $(function main() {
         if (text.charAt(0) !== letter) {
             log("Client: " + text + " is don't start with " + letter);
         }
-        else if ($.inArray(text, game_status.p1.words) === 1 || $.inArray(text, game_status.p2.words) === 1) {
+        else if ($.inArray(text, game_status[user].words) === 1 || $.inArray(text, game_status[user].words) === 1) {
             log("Client: " + text + " is used");
         } else {
 
@@ -88,17 +95,21 @@ $(function main() {
     });
 
 
-    // On 'leave/join' receive, we say to all other user who connect/disco
     sckt.on('join', function (data) {
-        log('User ' + data.username + ' entered room');
+        log(data.username + ' entered room');
     });
     sckt.on('leave', function (data) {
-        log('User ' + data.username + ' left room');
+        log(data.username + ' left room');
     });
     sckt.on('auth_error', function (data) {
         log('auth error');
         sckt.disconnect();
     });
+    //get username from server
+    sckt.on('auth', function (data) {
+        user = data.username
+    });
+    //server messages
     sckt.on('server', function (data) {
         if (typeof data.letter !== 'undefined') {
             letter = data.letter;
@@ -108,15 +119,14 @@ $(function main() {
         log('Server: ' + data.message);
     });
     sckt.on('move', function (data) {
-        log('Server: ' + 'User ' + data.username + ' played ' + data.move);
+        log('Server: ' + data.username + ' played ' + data.move);
         //TODO save words to right user
-        game_status.p1.words.push(data.move)
+        game_status[data.username].words.push(data.move)
     });
     sckt.on('game_state', function (data) {
-            game_status.p1.score = data.p1.score;
-            game_status.p1.words = data.p1.words;
-            game_status.p2.score = data.p2.score;
-            game_status.p2.words = data.p2.words;
+            for (var p in data) {
+                game_status[data[p].name] = data[p]
+            }
             print_status()
         }
     );
