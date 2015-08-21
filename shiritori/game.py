@@ -32,11 +32,18 @@ def md5(data):
 
 
 class Game(object):
-    def __init__(self, id, dictionary):
+    def get_dictionary(self, code):
+        if code == 'tr':
+            return turkish
+        if code == 'en':
+            return english
+
+    def __init__(self, id, code):
         self.uuid = id
         self.players = {}
         # game dictionary
-        self.dictionary = dictionary
+        self.dictionary_code = code
+        self.dictionary = self.get_dictionary(code)
 
         # TODO game types
         self.mode = None
@@ -85,6 +92,9 @@ class Game(object):
     def get_game(self):
         return self.players
 
+    def game_info(self):
+        return {'dict': self.dictionary_code, 'uuid': self.uuid}
+
 
 class ServerConnection(SockJSRoomHandler):
     _game = {}
@@ -120,13 +130,20 @@ class ServerConnection(SockJSRoomHandler):
         # TODO better way for lobby creation
         if not self._room.has_key(self._gcls() + 'lobby'):
             self._room[self._gcls() + 'lobby'] = set()
+            self._game[self._gcls() + 'lobby'] = Game('lobby', 'en')
+        if not self._room.has_key(self._gcls() + 'sad'):
+            self._room[self._gcls() + 'sad'] = set()
+            self._game[self._gcls() + 'sad'] = Game('sad', 'en')
+        if not self._room.has_key(self._gcls() + 'bs'):
+            self._room[self._gcls() + 'bs'] = set()
+            self._game[self._gcls() + 'bs'] = Game('bs', 'en')
 
     def __init__(self, session):
         super(ServerConnection, self).__init__(session)
         self.userid = None
         self.roomId = '-1'
         self.username = ''
-        self.isAuthenticated = False;
+        self.isAuthenticated = False
 
     def token_loader(self, token):
         try:
@@ -146,22 +163,25 @@ class ServerConnection(SockJSRoomHandler):
     def on_auth(self, data):
         if "token" not in data:
             self.publishToMyself(self.roomId, 'auth_error', {})
+            self.isAuthenticated = False
         elif self.token_loader(data["token"]):
             self.publishToMyself(self.roomId, 'auth_succes', {})
             self.isAuthenticated = True
         else:
             self.publishToMyself(self.roomId, 'auth_error', {})
+            self.isAuthenticated = False
+
+    def on_game_list(self, data):
+        list = []
+        for game in self._game.itervalues():
+            list.append(game.game_info())
+        self.publishToMyself(self.roomId, 'game_list', {'list': list})
 
     def on_join(self, data):
         # basic auth check
         if self.isAuthenticated:
             self.roomId = str(data['roomId'])
             # join room
-            # For test
-            if int(self.roomId) % 2 == 0:
-                self.create(self.roomId, turkish)
-            else:
-                self.create(self.roomId, english)
             self.join(self.roomId)
             # get game of joined room
             self.game = self.getGame(self.roomId)
@@ -218,3 +238,4 @@ class ServerConnection(SockJSRoomHandler):
             # Remove sockjsroom link to this room
             self.leave(self.roomId)
         self.roomId = '-1'
+        self.isAuthenticated = False
