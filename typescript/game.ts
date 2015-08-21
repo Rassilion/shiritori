@@ -67,6 +67,21 @@ $(function main() {
         return sckt;
     };
 
+    $('#refresh').click(function () {
+        sckt.emit('game_list', {});
+    });
+    $('#gamelist').on('click', 'tr', function () {
+        var uuid = $(this).attr("uuid");
+        roomid = uuid;
+        sckt.emit('join', {roomId: uuid});
+        $('#lobby').addClass('collapse');
+        $('#game').removeClass('collapse');
+    });
+    $('#create').on('click', function () {
+        var dict = $('#dict').val();
+        sckt.emit('create', {dict: dict});
+    });
+
     function log(msg) {
         var control = $('#log');
         control.html(control.html() + msg + '<br/>');
@@ -144,10 +159,17 @@ $(function main() {
         }
     );
     sckt.on('game_list', function (data) {
+            $('#gamelist').html('');
             for (var p in data.list) {
-                console.log(data.list[p])
+                $('#gamelist').append('<tr uuid="' + data.list[p].uuid + '"><td>' + data.list[p].dict + '</td><td>' + data.list[p].uuid + '</td></tr>');
             }
-            print_status()
+        }
+    );
+    sckt.on('create', function (data) {
+            roomid = data.roomid;
+            sckt.emit('join', {roomId: roomid});
+            $('#lobby').addClass('collapse');
+            $('#game').removeClass('collapse');
         }
     );
 

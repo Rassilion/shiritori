@@ -214,8 +214,8 @@ class ServerConnection(SockJSRoomHandler):
 
     def on_create(self, data):
         if self.isAuthenticated:
-            id = uuid.uuid4()
-            self.create(id, data.dict)
+            id = str(uuid.uuid4())
+            self.create(id, data['dict'])
             self.publishToMyself(self.roomId, 'create',
                                  {'roomid': id})
 
