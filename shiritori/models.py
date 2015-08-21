@@ -40,4 +40,23 @@ class User(db.Model, UserMixin):
     def __unicode__(self):
         return self.username
 
+
+class Game(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(db.String(64), unique=True)
+    p1 = db.Column(db.Integer, db.ForeignKey('user.id'))
+    p2 = db.Column(db.Integer, db.ForeignKey('user.id'))
+    dict = db.Column(db.String(2))
+    mode = db.Column(db.String(64))
+    p1_words = db.Column(db.String)
+    p2_words = db.Column(db.String)
+    p1_score = db.Column(db.Integer)
+    p2_score = db.Column(db.Integer)
+    timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    length = db.Column(db.Integer)
+
+    def __unicode__(self):
+        return self.uuid
+
+
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
