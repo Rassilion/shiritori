@@ -58,7 +58,6 @@ class Game(object):
             self.players[id] = {'score': 0, 'words': []}
 
     def check(self, word):
-        print self.words()
         if word.startswith(
                 self.letter) and word not in self.words() and word in self.dictionary:
             return True
@@ -125,6 +124,7 @@ class ServerConnection(SockJSRoomHandler):
     def init(self):
         self.userid = None
         self.roomId = '-1'
+        self.username = ''
 
     def token_loader(self, token):
         try:
@@ -132,6 +132,7 @@ class ServerConnection(SockJSRoomHandler):
             user = User.query.filter_by(id=data[0]).first()
             if user and safe_str_cmp(md5(user.password), data[1]):
                 self.userid = data[0]
+                self.username = user.username
                 return True
         except:
             pass
@@ -157,14 +158,14 @@ class ServerConnection(SockJSRoomHandler):
                                  {'letter': self.game.letter, 'message': "Letter is " + self.game.letter})
             self.publishToMyself(self.roomId, 'game_state', self.game.get_game())
             self.publishToRoom(self.roomId, 'join', {
-                'username': self.userid
+                'username': self.username
             })
 
     def on_move(self, data):
         if self.roomId != '-1':
             if self.game.player_move(self.userid, data["move"]):
                 self.publishToRoom(self.roomId, 'move', {
-                    'username': self.userid,
+                    'username': self.username,
                     'time': datetime.now(),
                     'move': str(data['move'])
                 })
@@ -192,7 +193,7 @@ class ServerConnection(SockJSRoomHandler):
 
             # Say to other users the current user leave room
             self.publishToOther(self.roomId, 'leave', {
-                'username': str(self.userid)
+                'username': str(self.username)
             })
 
             # Remove sockjsroom link to this room
