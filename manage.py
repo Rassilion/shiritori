@@ -3,8 +3,8 @@ from flask.ext.script.commands import Server, Shell, ShowUrls, Clean
 from flask.ext.security.script import CreateUserCommand, AddRoleCommand, \
     RemoveRoleCommand, ActivateUserCommand, DeactivateUserCommand
 
-from shiritori import app
-from shiritori.script import ResetDB, PopulateDB
+from website import app
+from website.script import ResetDB, PopulateDB
 
 manager = Manager(app)
 manager.add_command("shell", Shell())

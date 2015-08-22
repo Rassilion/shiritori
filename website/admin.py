@@ -1,8 +1,8 @@
 from flask.ext.admin.contrib.sqla import ModelView
 from flask.ext.admin import Admin
 from flask.ext.security import current_user,utils
-from shiritori import db
-from shiritori.models import User, Role
+from website import db
+from website.models import User, Role
 from wtforms.fields import TextField
 
 

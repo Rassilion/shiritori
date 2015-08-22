@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from flask import render_template, flash, g, jsonify
-from shiritori import app, forms
+from website import app, forms
 import time
-from shiritori.models import user_datastore
+from website.models import user_datastore
 from flask.ext.security import Security, current_user
 
 # initilize flask-security

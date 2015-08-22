@@ -3,19 +3,18 @@
 from datetime import datetime
 import logging
 from itsdangerous import URLSafeTimedSerializer
-from .dictionary import english, turkish
-import random
 import hashlib
 import uuid
 from sockjsroom import SockJSRoomHandler
-import json
-from .config import Config
+from website.config import Config
 from werkzeug.security import safe_str_cmp
-from .models import User
+from website.models import User
+from game import Game
 
 # temp config variables
 token_max_age = None
 s = URLSafeTimedSerializer(secret_key=Config.SECRET_KEY, salt='remember-salt')
+
 
 
 def encode_string(string):
@@ -29,71 +28,6 @@ def encode_string(string):
 
 def md5(data):
     return hashlib.md5(encode_string(data)).hexdigest()
-
-
-class Game(object):
-    def get_dictionary(self, code):
-        if code == 'tr':
-            return turkish
-        if code == 'en':
-            return english
-
-    def __init__(self, id, code):
-        self.uuid = id
-        self.players = {}
-        # game dictionary
-        self.dictionary_code = code
-        self.dictionary = self.get_dictionary(code)
-
-        # TODO game types
-        self.mode = None
-        # TODO random start letter?
-        self.letter = "a"
-        self.timestamp = datetime.utcnow
-
-    def words(self):
-        w = []
-        for p in self.players:
-            w += self.players[p]['words']
-        return w
-
-    def __repr__(self):
-        return str(self.uuid)
-
-    def add_player(self, id, name):
-        if id not in self.players:
-            self.players[id] = {'name': name, 'score': 0, 'words': []}
-
-    def check(self, word):
-        if word.startswith(
-                self.letter) and word not in self.words() and word in self.dictionary:
-            return True
-        else:
-            return False
-
-    def player_move(self, id, word):
-        if self.check(word):
-            self.players[id]['score'] += len(word)
-            self.letter = word[-1]
-            self.players[id]['words'].append(word)
-            return True
-        else:
-            return False
-
-    # def ai_move(self):
-    #     word = ""
-    #     while not self.check(word):
-    #         word = random.choice(english[self.letter])
-    #     self.p2 += len(word)
-    #     self.letter = word[-1]
-    #     self.p2_words.append(word)
-
-    # TODO hide userid
-    def get_game(self):
-        return self.players
-
-    def game_info(self):
-        return {'dict': self.dictionary_code, 'uuid': self.uuid}
 
 
 class ServerConnection(SockJSRoomHandler):
@@ -112,6 +46,7 @@ class ServerConnection(SockJSRoomHandler):
             self._room[self._gcls() + _id].remove(self)
 
     def create(self, _id, dict):
+        """ Create a room """
         if not self._room.has_key(self._gcls() + _id):
             self._room[self._gcls() + _id] = set()
             self._game[self._gcls() + _id] = Game(_id, dict)
@@ -127,6 +62,7 @@ class ServerConnection(SockJSRoomHandler):
             self._game[self._gcls() + _id].add_player(self.userid, self.username)
 
     def on_open(self, info):
+        """ open socket handler """
         # TODO better way for lobby creation
         if not self._room.has_key(self._gcls() + 'lobby'):
             self._room[self._gcls() + 'lobby'] = set()
@@ -146,6 +82,7 @@ class ServerConnection(SockJSRoomHandler):
         self.isAuthenticated = False
 
     def token_loader(self, token):
+        """ decrypt remember me token and get userid and username"""
         try:
             data = s.loads(token, max_age=token_max_age)
             user = User.query.filter_by(id=data[0]).first()
@@ -157,10 +94,12 @@ class ServerConnection(SockJSRoomHandler):
                                      {'username': self.username})
                 return True
         except:
+            # TODO error handling
             pass
         return False
 
     def on_auth(self, data):
+        """auth handler"""
         if "token" not in data:
             self.publishToMyself(self.roomId, 'auth_error', {})
             self.isAuthenticated = False
@@ -172,13 +111,14 @@ class ServerConnection(SockJSRoomHandler):
             self.isAuthenticated = False
 
     def on_game_list(self, data):
+        """ emit game list """
         list = []
         for game in self._game.itervalues():
             list.append(game.game_info())
         self.publishToMyself(self.roomId, 'game_list', {'list': list})
 
     def on_join(self, data):
-        # basic auth check
+        """ join handler """
         if self.isAuthenticated:
             self.roomId = str(data['roomId'])
             # join room
@@ -194,12 +134,13 @@ class ServerConnection(SockJSRoomHandler):
             })
 
     def on_move(self, data):
+        """ player move handler """
         if self.isAuthenticated:
             move = data["move"].encode('utf-8')
             if self.game.player_move(self.userid, move):
                 self.publishToRoom(self.roomId, 'move', {
                     'username': self.username,
-                    'time': datetime.now(),
+                    'time': datetime.utcnow(),
                     'move': move
                 })
                 self.publishToRoom(self.roomId, 'server',
@@ -207,13 +148,14 @@ class ServerConnection(SockJSRoomHandler):
             else:
                 # TODO: Error handler
                 self.publishToRoom(self.roomId, 'server', {
-                    'time': datetime.now(),
+                    'time': datetime.utcnow(),
                     'message': move + u" error"
                 })
                 self.publishToRoom(self.roomId, 'server',
                                    {'letter': self.game.letter, 'message': u"Letter is " + self.game.letter})
 
     def on_create(self, data):
+        """game create handler"""
         if self.isAuthenticated:
             id = str(uuid.uuid4())
             self.create(id, data['dict'])
@@ -224,7 +166,7 @@ class ServerConnection(SockJSRoomHandler):
         self.on_leave()
 
     def on_leave(self):
-        ''' Quit chat room '''
+        ''' Quit game '''
         # Only if user has time to call self.initialize
         # (sometimes it's not the case)
         if self.roomId != '-1':
