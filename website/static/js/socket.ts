@@ -91,6 +91,8 @@ socket.prototype.connect = function() {
 		if(events) {
 			var parsed = (typeof(data) === 'object' && data !== null) ? data
 						 : JSON.parse(data);
+			//DEBUG
+			console.log(parsed);
 
 			for(var i=0, l=events.length; i<l; ++i) {
 				var fct = events[i];
