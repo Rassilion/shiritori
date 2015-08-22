@@ -1,6 +1,7 @@
 /// <reference path="typings/tsd.d.ts" />
 
 $(function main() {
+    // url paramater parser
     var qs = (function (a) {
         if (a == "") return {};
         var b = {};
@@ -13,9 +14,11 @@ $(function main() {
         }
         return b;
     })(window.location.search.substr(1).split('&'));
-
+    //get token from cookie
     var token = Cookies.get("remember_token");
+    // get roomid from url
     var roomid = qs["id"];
+    // if roomid not given show lobby
     if (roomid === undefined) {
         roomid = 'lobby';
         $('#game').addClass('collapse')
@@ -23,6 +26,7 @@ $(function main() {
         $('#lobby').addClass('collapse')
     }
     var user;
+    //socket
     var sckt = GameRoom(roomid, token);
     var game_status = {};
     var letter;
@@ -31,11 +35,6 @@ $(function main() {
     /**
      * Create a new socket instance between client and server,
      * and start use it
-     *
-     * @method GameRoom
-     *
-     * @param roomId {String} A unique string to represent a single room
-     * @param username {String} The username to use on this room
      */
     function GameRoom(roomId, token) {
         var sckt = new socket('game1', true);
@@ -66,10 +65,11 @@ $(function main() {
 
         return sckt;
     };
-
+    // refresh game list
     $('#refresh').click(function () {
         sckt.emit('game_list', {});
     });
+    // click to join
     $('#gamelist').on('click', 'tr', function () {
         var uuid = $(this).attr("uuid");
         roomid = uuid;
@@ -77,21 +77,22 @@ $(function main() {
         $('#lobby').addClass('collapse');
         $('#game').removeClass('collapse');
     });
+    // create new game
     $('#create').on('click', function () {
         var dict = $('#dict').val();
         sckt.emit('create', {dict: dict});
     });
-
+    // game log
     function log(msg) {
         var control = $('#log');
         control.html(control.html() + msg + '<br/>');
         control.scrollTop(control.scrollTop() + 1000);
         print_status()
     };
-
+    // print game status
     function print_status() {
         var scores = $('#scores');
-        scores.html('<li class="list-group-item">user: ' + user + '</li>' + '<li class="list-group-item">roomid: ' + roomid + '</li>'+'<li class="list-group-item">url: '+window.location.hostname+'/game?id='+roomid + '<li class="list-group-item">Letter: ' + letter + '</li>');
+        scores.html('<li class="list-group-item">user: ' + user + '</li>' + '<li class="list-group-item">roomid: ' + roomid + '</li>' + '<li class="list-group-item">url: ' + window.location.hostname + '/game?id=' + roomid + '<li class="list-group-item">Letter: ' + letter + '</li>');
         for (var p in game_status) {
             scores.html(scores.html() + '<li class="list-group-item">' + p + ': ' + game_status[p].score + '</li>');
         }
@@ -102,15 +103,19 @@ $(function main() {
         }
 
     };
-
+    // get player move
     $('#move').submit(function () {
         var text = $('#text').val().toLowerCase();
+        // chekc first letter
         if (text.charAt(0) !== letter) {
             log("Client: " + text + " is don't start with " + letter);
         }
+        // check if is new word
         else if ($.inArray(text, game_status[user].words) === 1 || $.inArray(text, game_status[user].words) === 1) {
             log("Client: " + text + " is used");
-        } else {
+        }
+        // send to server
+        else {
 
             sckt.emit('move', {
                 move: text
@@ -122,6 +127,7 @@ $(function main() {
         return false;
     });
 
+    //socket handlers
 
     sckt.on('join', function (data) {
         log(data.username + ' entered room');
