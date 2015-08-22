@@ -6,14 +6,15 @@ from itsdangerous import URLSafeTimedSerializer
 import hashlib
 import uuid
 from sockjsroom import SockJSRoomHandler
-from config import Config
+from website.config import Config
 from werkzeug.security import safe_str_cmp
-from models import User
+from website.models import User
 from game import Game
 
 # temp config variables
 token_max_age = None
 s = URLSafeTimedSerializer(secret_key=Config.SECRET_KEY, salt='remember-salt')
+
 
 
 def encode_string(string):

@@ -3,13 +3,13 @@
 import logging
 import os
 from datetime import datetime
-from shiritori import app
+from website import app
 
 from tornado.wsgi import WSGIContainer
 from tornado.ioloop import IOLoop
 from tornado import web
 from sockjs.tornado import SockJSRouter, SockJSConnection
-from shiritori.game_server import ServerConnection
+from game_server.game_server import ServerConnection
 
 
 def configureLogger(logFolder, logFile):

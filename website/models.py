@@ -1,4 +1,4 @@
-from shiritori import db
+from website import db
 from flask.ext.security import UserMixin, RoleMixin, SQLAlchemyUserDatastore
 import datetime
 

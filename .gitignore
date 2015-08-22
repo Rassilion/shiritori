@@ -1,4 +1,4 @@
-/shiritori/app.db
+/website/app.db
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -60,5 +60,6 @@ target/
 .idea/
 bower_components/
 node_modules/
-typings/
-shiritori/static/js/
+website/static/js/typings/
+website/static/js/*.js
+website/static/js/*.map

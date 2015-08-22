@@ -11,7 +11,7 @@ app = Flask(__name__)
 app.config.from_object(Config)
 db = SQLAlchemy(app)
 
-from shiritori.admin import init_admin
+from website.admin import init_admin
 init_admin(app)
 
 
