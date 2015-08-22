@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 from dictionary import english, turkish
 from datetime import datetime
+from exceptions import *
 
 
 class Game(object):
@@ -59,11 +60,14 @@ class Game(object):
         :param word: word
         :return: True or False
         """
-        if word.startswith(
-                self.letter) and word not in self.words() and word in self.dictionary:
-            return True
+        if not word.startswith(self.letter):
+            raise BadLetterError
+        elif word in self.words():
+            raise UsedWordError
+        elif word not in self.dictionary:
+            raise BadWordError
         else:
-            return False
+            return True
 
     def player_move(self, id, word):
         """
@@ -75,7 +79,7 @@ class Game(object):
         # check players turn
         # TODO more than 2 player support
         if self.last_turn is id:
-            return False
+            raise TurnError
         elif self.check(word):
             self.players[id]['score'] += len(word)
             self.letter = word[-1]
@@ -83,7 +87,7 @@ class Game(object):
             self.last_turn = id
             return True
         else:
-            return False
+            raise GameError
 
     # def ai_move(self):
     #     word = ""

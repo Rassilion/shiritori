@@ -10,6 +10,7 @@ from website.config import Config
 from werkzeug.security import safe_str_cmp
 from website.models import User
 from game import Game
+from exceptions import *
 
 # temp config variables
 token_max_age = None
@@ -137,21 +138,28 @@ class ServerConnection(SockJSRoomHandler):
         """ player move handler """
         if self.isAuthenticated:
             move = data["move"].encode('utf-8')
-            if self.game.player_move(self.userid, move):
-                self.publishToRoom(self.roomId, 'move', {
-                    'username': self.username,
+            try:
+                if self.game.player_move(self.userid, move):
+                    self.publishToRoom(self.roomId, 'move', {
+                        'username': self.username,
+                        'time': datetime.utcnow(),
+                        'move': move
+                    })
+                    self.publishToRoom(self.roomId, 'server',
+                                       {'letter': self.game.letter, 'message': u"Letter is " + self.game.letter})
+            except BadWordError:
+                self.publishToMyself(self.roomId, 'server', {
                     'time': datetime.utcnow(),
-                    'move': move
+                    'message': move + u" is not in dictionary"
                 })
-                self.publishToRoom(self.roomId, 'server',
+                self.publishToMyself(self.roomId, 'server',
                                    {'letter': self.game.letter, 'message': u"Letter is " + self.game.letter})
-            else:
-                # TODO: Error handler
-                self.publishToRoom(self.roomId, 'server', {
+            except TurnError:
+                self.publishToMyself(self.roomId, 'server', {
                     'time': datetime.utcnow(),
-                    'message': move + u" error"
+                    'message': move + u" It isn't your turn"
                 })
-                self.publishToRoom(self.roomId, 'server',
+                self.publishToMyself(self.roomId, 'server',
                                    {'letter': self.game.letter, 'message': u"Letter is " + self.game.letter})
 
     def on_create(self, data):
