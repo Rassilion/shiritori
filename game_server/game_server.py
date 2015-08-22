@@ -36,27 +36,26 @@ class ServerConnection(SockJSRoomHandler):
 
     def getGame(self, _id):
         """ Retrieve a game from it's id """
-        if self._game.has_key(self._gcls() + _id):
+        if (self._gcls() + _id) in self._game:
             return self._game[self._gcls() + _id]
         return None
 
     # override leave for perment rooms
     def leave(self, _id):
         """ Leave a room """
-        if self._room.has_key(self._gcls() + _id):
+        if (self._gcls() + _id) in self._room:
             self._room[self._gcls() + _id].remove(self)
 
     def create(self, _id, dict):
         """ Create a room """
-        if not self._room.has_key(self._gcls() + _id):
+        if not (self._gcls() + _id) in self._room:
             self._room[self._gcls() + _id] = set()
             self._game[self._gcls() + _id] = Game(_id, dict)
 
     def join(self, _id):
         """ Join a room """
-        if not self._room.has_key(self._gcls() + _id):
-            # TODO: Send error meesage to client
-            print "room not found"
+        if not (self._gcls() + _id) in self._room:
+            raise BadRoomIdError
         else:
             self._room[self._gcls() + _id].add(self)
             # add player to game
@@ -64,16 +63,9 @@ class ServerConnection(SockJSRoomHandler):
 
     def on_open(self, info):
         """ open socket handler """
-        # TODO better way for lobby creation
-        if not self._room.has_key(self._gcls() + 'lobby'):
-            self._room[self._gcls() + 'lobby'] = set()
-            self._game[self._gcls() + 'lobby'] = Game('lobby', 'en')
-        if not self._room.has_key(self._gcls() + 'sad'):
-            self._room[self._gcls() + 'sad'] = set()
-            self._game[self._gcls() + 'sad'] = Game('sad', 'en')
-        if not self._room.has_key(self._gcls() + 'bs'):
-            self._room[self._gcls() + 'bs'] = set()
-            self._game[self._gcls() + 'bs'] = Game('bs', 'en')
+        self.create('addds','en')
+        self.create('ttttt','tr')
+        self.create('ahhhhh','en')
 
     def __init__(self, session):
         super(ServerConnection, self).__init__(session)
@@ -121,18 +113,25 @@ class ServerConnection(SockJSRoomHandler):
     def on_join(self, data):
         """ join handler """
         if self.isAuthenticated:
-            self.roomId = str(data['roomId'])
-            # join room
-            self.join(self.roomId)
-            # get game of joined room
-            self.game = self.getGame(self.roomId)
-            # inform clients
-            self.publishToMyself(self.roomId, 'server',
-                                 {'letter': self.game.letter, 'message': u"Letter is " + self.game.letter})
-            self.publishToMyself(self.roomId, 'game_state', self.game.get_game())
-            self.publishToRoom(self.roomId, 'join', {
-                'username': self.username
-            })
+            room=str(data['roomId'])
+            try:
+                # join room
+                self.join(room)
+                # get game of joined room
+                self.game = self.getGame(room)
+                self.roomId = room
+                # inform clients
+                self.publishToMyself(self.roomId, 'server',
+                                     {'letter': self.game.letter, 'message': u"Letter is " + self.game.letter})
+                self.publishToMyself(self.roomId, 'game_state', self.game.get_game())
+                self.publishToRoom(self.roomId, 'join', {
+                    'username': self.username
+                })
+            except BadRoomIdError:
+                self.publishToMyself(self.roomId, 'server', {
+                    'time': datetime.utcnow(),
+                    'message': u" Room not found"
+                })
 
     def on_move(self, data):
         """ player move handler """
