@@ -10,6 +10,20 @@ from tornado.ioloop import IOLoop
 from tornado import web
 from sockjs.tornado import SockJSRouter, SockJSConnection
 from game_server.game_server import ServerConnection
+from guppy import hpy
+
+
+class MemoryHandler(web.RequestHandler):
+    def get(self):
+        h = hpy()
+        r = h.heap()
+        self.write('<pre>')
+        self.write(unicode(r))
+        r = r.more
+        self.write(unicode(r))
+        r = r.more
+        self.write(unicode(r))
+        self.write('</pre>')
 
 
 def configureLogger(logFolder, logFile):
@@ -63,8 +77,9 @@ wsgi_app = WSGIContainer(app)
 EchoRouter = SockJSRouter(ServerConnection, '/game1')
 
 # add flask to tornado urls
-tornado_app = web.Application(EchoRouter.urls + [('.*', web.FallbackHandler, dict(fallback=wsgi_app)),
-                                                 ])
+tornado_app = web.Application(
+    EchoRouter.urls + [(r'/memory', MemoryHandler), ('.*', web.FallbackHandler, dict(fallback=wsgi_app)),
+                       ], debug=True)
 tornado_app.listen(5000)
 
 logFile = './application.log'

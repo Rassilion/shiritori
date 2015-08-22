@@ -17,7 +17,6 @@ token_max_age = None
 s = URLSafeTimedSerializer(secret_key=Config.SECRET_KEY, salt='remember-salt')
 
 
-
 def encode_string(string):
     """Encodes a string to bytes, if it isn't already.
     :param string: The string to encode"""
@@ -63,9 +62,9 @@ class ServerConnection(SockJSRoomHandler):
 
     def on_open(self, info):
         """ open socket handler """
-        self.create('addds','en')
-        self.create('ttttt','tr')
-        self.create('ahhhhh','en')
+        self.create('addds', 'en')
+        self.create('ttttt', 'tr')
+        self.create('ahhhhh', 'en')
 
     def __init__(self, session):
         super(ServerConnection, self).__init__(session)
@@ -113,7 +112,7 @@ class ServerConnection(SockJSRoomHandler):
     def on_join(self, data):
         """ join handler """
         if self.isAuthenticated:
-            room=str(data['roomId'])
+            room = str(data['roomId'])
             try:
                 # join room
                 self.join(room)
@@ -152,14 +151,14 @@ class ServerConnection(SockJSRoomHandler):
                     'message': move + u" is not in dictionary"
                 })
                 self.publishToMyself(self.roomId, 'server',
-                                   {'letter': self.game.letter, 'message': u"Letter is " + self.game.letter})
+                                     {'letter': self.game.letter, 'message': u"Letter is " + self.game.letter})
             except TurnError:
                 self.publishToMyself(self.roomId, 'server', {
                     'time': datetime.utcnow(),
                     'message': move + u" It isn't your turn"
                 })
                 self.publishToMyself(self.roomId, 'server',
-                                   {'letter': self.game.letter, 'message': u"Letter is " + self.game.letter})
+                                     {'letter': self.game.letter, 'message': u"Letter is " + self.game.letter})
 
     def on_create(self, data):
         """game create handler"""
