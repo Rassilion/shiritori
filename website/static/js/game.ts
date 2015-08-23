@@ -139,6 +139,10 @@ $(function main() {
         log('auth error');
         sckt.disconnect();
     });
+    sckt.on('end', function (data) {
+        log('game end');
+        sckt.disconnect();
+    });
     //get username from server
     sckt.on('auth', function (data) {
         user = data.username
@@ -153,9 +157,9 @@ $(function main() {
         log('Server: ' + data.message);
     });
     sckt.on('move', function (data) {
+        game_status[data.username].words.push(data.move);
+        game_status[data.username].score+=data.move.length;
         log('Server: ' + data.username + ' played ' + data.move);
-        //TODO save words to right user
-        game_status[data.username].words.push(data.move)
     });
     sckt.on('game_state', function (data) {
             for (var p in data) {
