@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from datetime import datetime
+import json
 import logging
 from itsdangerous import URLSafeTimedSerializer
 import hashlib
@@ -10,11 +11,14 @@ from website.config import Config
 from werkzeug.security import safe_str_cmp
 from website.models import User
 from game import Game
+from exceptions import *
+from tornado import gen, httpclient
 
 # temp config variables
+
+http_client = httpclient.AsyncHTTPClient()
 token_max_age = None
 s = URLSafeTimedSerializer(secret_key=Config.SECRET_KEY, salt='remember-salt')
-
 
 
 def encode_string(string):
@@ -35,27 +39,30 @@ class ServerConnection(SockJSRoomHandler):
 
     def getGame(self, _id):
         """ Retrieve a game from it's id """
-        if self._game.has_key(self._gcls() + _id):
+        if (self._gcls() + _id) in self._game:
             return self._game[self._gcls() + _id]
         return None
 
     # override leave for perment rooms
     def leave(self, _id):
         """ Leave a room """
-        if self._room.has_key(self._gcls() + _id):
+        if (self._gcls() + _id) in self._room:
             self._room[self._gcls() + _id].remove(self)
 
     def create(self, _id, dict):
         """ Create a room """
-        if not self._room.has_key(self._gcls() + _id):
+        if not (self._gcls() + _id) in self._room:
             self._room[self._gcls() + _id] = set()
             self._game[self._gcls() + _id] = Game(_id, dict)
 
+    def remove(self,_id):
+        del self._room[self._gcls() + _id]
+        del self._game[self._gcls() + _id]
+
     def join(self, _id):
         """ Join a room """
-        if not self._room.has_key(self._gcls() + _id):
-            # TODO: Send error meesage to client
-            print "room not found"
+        if not (self._gcls() + _id) in self._room:
+            raise BadRoomIdError
         else:
             self._room[self._gcls() + _id].add(self)
             # add player to game
@@ -63,16 +70,9 @@ class ServerConnection(SockJSRoomHandler):
 
     def on_open(self, info):
         """ open socket handler """
-        # TODO better way for lobby creation
-        if not self._room.has_key(self._gcls() + 'lobby'):
-            self._room[self._gcls() + 'lobby'] = set()
-            self._game[self._gcls() + 'lobby'] = Game('lobby', 'en')
-        if not self._room.has_key(self._gcls() + 'sad'):
-            self._room[self._gcls() + 'sad'] = set()
-            self._game[self._gcls() + 'sad'] = Game('sad', 'en')
-        if not self._room.has_key(self._gcls() + 'bs'):
-            self._room[self._gcls() + 'bs'] = set()
-            self._game[self._gcls() + 'bs'] = Game('bs', 'en')
+        self.create('addds', 'en')
+        self.create('ttttt', 'tr')
+        self.create('ahhhhh', 'en')
 
     def __init__(self, session):
         super(ServerConnection, self).__init__(session)
@@ -120,39 +120,64 @@ class ServerConnection(SockJSRoomHandler):
     def on_join(self, data):
         """ join handler """
         if self.isAuthenticated:
-            self.roomId = str(data['roomId'])
-            # join room
-            self.join(self.roomId)
-            # get game of joined room
-            self.game = self.getGame(self.roomId)
-            # inform clients
-            self.publishToMyself(self.roomId, 'server',
-                                 {'letter': self.game.letter, 'message': u"Letter is " + self.game.letter})
-            self.publishToMyself(self.roomId, 'game_state', self.game.get_game())
-            self.publishToRoom(self.roomId, 'join', {
-                'username': self.username
-            })
+            room = str(data['roomId'])
+            try:
+                # join room
+                self.join(room)
+                # get game of joined room
+                self.game = self.getGame(room)
+                self.roomId = room
+                # inform clients
+                self.publishToMyself(self.roomId, 'server',
+                                     {'letter': self.game.letter, 'message': u"Letter is " + self.game.letter})
+                self.publishToRoom(self.roomId, 'game_state', self.game.get_game_state())
+                self.publishToRoom(self.roomId, 'join', {
+                    'username': self.username
+                })
+            except BadRoomIdError:
+                self.publishToMyself(self.roomId, 'server', {
+                    'time': datetime.utcnow(),
+                    'message': u" Room not found"
+                })
 
     def on_move(self, data):
         """ player move handler """
         if self.isAuthenticated:
             move = data["move"].encode('utf-8')
-            if self.game.player_move(self.userid, move):
-                self.publishToRoom(self.roomId, 'move', {
-                    'username': self.username,
+            try:
+                if self.game.player_move(self.userid, move):
+                    self.publishToRoom(self.roomId, 'move', {
+                        'username': self.username,
+                        'time': datetime.utcnow(),
+                        'move': move
+                    })
+                    self.publishToRoom(self.roomId, 'server',
+                                       {'letter': self.game.letter, 'message': u"Letter is " + self.game.letter})
+            except BadWordError:
+                self.publishToMyself(self.roomId, 'server', {
                     'time': datetime.utcnow(),
-                    'move': move
+                    'message': move + u" is not in dictionary"
                 })
-                self.publishToRoom(self.roomId, 'server',
-                                   {'letter': self.game.letter, 'message': u"Letter is " + self.game.letter})
-            else:
-                # TODO: Error handler
-                self.publishToRoom(self.roomId, 'server', {
+                self.publishToMyself(self.roomId, 'server',
+                                     {'letter': self.game.letter, 'message': u"Letter is " + self.game.letter})
+            except TurnError:
+                self.publishToMyself(self.roomId, 'server', {
                     'time': datetime.utcnow(),
-                    'message': move + u" error"
+                    'message': move + u" It isn't your turn"
                 })
-                self.publishToRoom(self.roomId, 'server',
-                                   {'letter': self.game.letter, 'message': u"Letter is " + self.game.letter})
+                self.publishToMyself(self.roomId, 'server',
+                                     {'letter': self.game.letter, 'message': u"Letter is " + self.game.letter})
+            except GameEnd as e:
+                self.publishToRoom(self.roomId, 'end',
+                                     {})
+
+                self.remove(self.roomId)
+                url = 'http://localhost:5000/api/save_game'
+                headers = {
+                    'Content-Type': 'application/json'
+                }
+                # send to flask
+                http_client.fetch(url, method="POST", headers=headers, body=json.dumps(e.game))
 
     def on_create(self, data):
         """game create handler"""
@@ -163,7 +188,11 @@ class ServerConnection(SockJSRoomHandler):
                                  {'roomid': id})
 
     def on_close(self):
-        self.on_leave()
+        try:
+            self.on_leave()
+        except TypeError:
+            self.roomId = '-1'
+            self.isAuthenticated = False
 
     def on_leave(self):
         ''' Quit game '''
@@ -174,7 +203,7 @@ class ServerConnection(SockJSRoomHandler):
             logging.debug('chat: leave room (roomId: %s)' % self.roomId)
 
             # Say to other users the current user leave room
-            self.publishToOther(self.roomId, 'leave', {
+            self.publishToRoom(self.roomId, 'leave', {
                 'username': str(self.username)
             })
 

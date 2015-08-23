@@ -1,18 +1,35 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import logging
-import os
 from datetime import datetime
 from website import app
 
 from tornado.wsgi import WSGIContainer
 from tornado.ioloop import IOLoop
 from tornado import web
-from sockjs.tornado import SockJSRouter, SockJSConnection
+from sockjs.tornado import SockJSRouter
 from game_server.game_server import ServerConnection
+from guppy import hpy
+
+from tornado.options import define, options
+
+define("port", default=5000, help="run on the given port", type=int)
 
 
-def configureLogger(logFolder, logFile):
+class MemoryHandler(web.RequestHandler):
+    def get(self):
+        h = hpy()
+        r = h.heap()
+        self.write('<pre>')
+        self.write(unicode(r))
+        r = r.more
+        self.write(unicode(r))
+        r = r.more
+        self.write(unicode(r))
+        self.write('</pre>')
+
+
+def configureLogger():
     ''' Start the logger instance and configure it '''
     # Set debug level
     logLevel = 'DEBUG'
@@ -25,10 +42,6 @@ def configureLogger(logFolder, logFile):
     # Remove default handler to keep only clean one
     for hdlr in logger.handlers:
         logger.removeHandler(hdlr)
-
-    # Create missing folder if needed
-    if not os.path.exists(logFolder):
-        os.makedirs(logFolder, 0700)
 
     #
     # ----------------------------
@@ -44,18 +57,6 @@ def configureLogger(logFolder, logFile):
     # Set our custom handler
     logger.addHandler(consoleh)
 
-    #
-    # ----------------------------
-    #   CREATE FILE HANDLER
-    # ----------------------------
-    #
-    fileh = logging.FileHandler(logFile, 'a')
-    fileh.setLevel(logLevel)
-    fileh.setFormatter(formatter)
-
-    # Set our custom handler
-    logger.addHandler(fileh)
-
 
 app.debug = True
 wsgi_app = WSGIContainer(app)
@@ -63,15 +64,17 @@ wsgi_app = WSGIContainer(app)
 EchoRouter = SockJSRouter(ServerConnection, '/game1')
 
 # add flask to tornado urls
-tornado_app = web.Application(EchoRouter.urls + [('.*', web.FallbackHandler, dict(fallback=wsgi_app)),
-                                                 ])
-tornado_app.listen(5000)
+tornado_app = web.Application(
+    EchoRouter.urls + [(r'/memory', MemoryHandler), ('.*', web.FallbackHandler, dict(fallback=wsgi_app)),
+                       ], debug=True)
 
-logFile = './application.log'
-logFolder = os.path.dirname(logFile)
-configureLogger(logFolder, logFile)
+# start server
+options.parse_command_line()
+tornado_app.listen(options.port)
+
+configureLogger()
 
 # Print logger message
-logging.debug('\n\nSystem start at: %s\nSystem log level: %s\n' % (datetime.now(), 'DEBUG'))
+logging.debug('\n\nSystem start at: %s port: %s\nSystem log level: %s\n' % (datetime.utcnow(), options.port, 'DEBUG'))
 
 IOLoop.instance().start()

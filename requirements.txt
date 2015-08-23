@@ -11,3 +11,7 @@ uuid
 sockjs-tornado
 bcrypt
 sockjsroom
+tornado-redis
+redis
+flask-redis
+guppy

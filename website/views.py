@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from flask import render_template, flash, g, jsonify
-from website import app, forms
+from flask import render_template, flash, g, jsonify,request,make_response
+from website import app, forms,db
 import time
-from website.models import user_datastore
+from website.models import user_datastore,Game
 from flask.ext.security import Security, current_user
 
 # initilize flask-security
@@ -29,5 +29,14 @@ def index():
 @app.route('/game', methods=['GET', 'POST'])
 def game():
     return render_template('game.html')
+
+
+@app.route('/api/save_game', methods=['POST'])
+def save_game():
+    if request.json:
+        # TODO save db
+        print request.json
+    return jsonify({'status':'ok'})
+
 
 
