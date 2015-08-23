@@ -8,6 +8,7 @@ A multiplayer shiritori game with multi language support
   - [x] Word lists
   - [ ] Front-end
 - [ ] Game modes
+  - [X] Classic (score limit 100)
 - [ ] Achievements
 - [ ] User stats (most used word etc.)
 - [ ] Guest user
