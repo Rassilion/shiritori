@@ -45,8 +45,8 @@ class BadLetterError(WordError):
 class GameEnd(GameError):
     """game finished"""
 
-    def __init__(self, id):
-        self.winner = id
+    def __init__(self, game):
+        self.game = game
 
 
 class BadRoomIdError(SockError):

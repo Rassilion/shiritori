@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from datetime import datetime
+import json
 import logging
 from itsdangerous import URLSafeTimedSerializer
 import hashlib
@@ -11,8 +12,11 @@ from werkzeug.security import safe_str_cmp
 from website.models import User
 from game import Game
 from exceptions import *
+from tornado import gen, httpclient
 
 # temp config variables
+
+http_client = httpclient.AsyncHTTPClient()
 token_max_age = None
 s = URLSafeTimedSerializer(secret_key=Config.SECRET_KEY, salt='remember-salt')
 
@@ -50,6 +54,10 @@ class ServerConnection(SockJSRoomHandler):
         if not (self._gcls() + _id) in self._room:
             self._room[self._gcls() + _id] = set()
             self._game[self._gcls() + _id] = Game(_id, dict)
+
+    def remove(self,_id):
+        del self._room[self._gcls() + _id]
+        del self._game[self._gcls() + _id]
 
     def join(self, _id):
         """ Join a room """
@@ -122,7 +130,7 @@ class ServerConnection(SockJSRoomHandler):
                 # inform clients
                 self.publishToMyself(self.roomId, 'server',
                                      {'letter': self.game.letter, 'message': u"Letter is " + self.game.letter})
-                self.publishToMyself(self.roomId, 'game_state', self.game.get_game())
+                self.publishToRoom(self.roomId, 'game_state', self.game.get_game_state())
                 self.publishToRoom(self.roomId, 'join', {
                     'username': self.username
                 })
@@ -159,6 +167,17 @@ class ServerConnection(SockJSRoomHandler):
                 })
                 self.publishToMyself(self.roomId, 'server',
                                      {'letter': self.game.letter, 'message': u"Letter is " + self.game.letter})
+            except GameEnd as e:
+                self.publishToRoom(self.roomId, 'end',
+                                     {})
+
+                self.remove(self.roomId)
+                url = 'http://localhost:5000/api/save_game'
+                headers = {
+                    'Content-Type': 'application/json'
+                }
+                # send to flask
+                http_client.fetch(url, method="POST", headers=headers, body=json.dumps(e.game))
 
     def on_create(self, data):
         """game create handler"""
@@ -169,7 +188,11 @@ class ServerConnection(SockJSRoomHandler):
                                  {'roomid': id})
 
     def on_close(self):
-        self.on_leave()
+        try:
+            self.on_leave()
+        except TypeError:
+            self.roomId = '-1'
+            self.isAuthenticated = False
 
     def on_leave(self):
         ''' Quit game '''
@@ -180,7 +203,7 @@ class ServerConnection(SockJSRoomHandler):
             logging.debug('chat: leave room (roomId: %s)' % self.roomId)
 
             # Say to other users the current user leave room
-            self.publishToOther(self.roomId, 'leave', {
+            self.publishToRoom(self.roomId, 'leave', {
                 'username': str(self.username)
             })
 
