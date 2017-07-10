@@ -4,7 +4,7 @@ from flask import render_template, flash, g, jsonify,request,make_response
 from website import app, forms,db
 import time
 from website.models import user_datastore,Game
-from flask.ext.security import Security, current_user
+from flask_security import Security, current_user
 
 # initilize flask-security
 security = Security(app, user_datastore)

@@ -1,5 +1,5 @@
 from website import db
-from flask.ext.security import UserMixin, RoleMixin, SQLAlchemyUserDatastore
+from flask_security import UserMixin, RoleMixin, SQLAlchemyUserDatastore
 import datetime
 
 roles_users = db.Table(

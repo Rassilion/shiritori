@@ -61,5 +61,8 @@ target/
 bower_components/
 node_modules/
 website/static/js/typings/
-website/static/js/*.js
 website/static/js/*.map
+website/static/js/jquery/
+website/static/js/node/
+website/static/js/socket.io/
+website/static/js/sockjs/
